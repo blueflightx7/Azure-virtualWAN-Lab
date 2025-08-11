@@ -56,7 +56,7 @@ param spoke2VnetAddressSpace string = '10.32.1.0/26'
 @description('Spoke 3 VNet name')
 param spoke3VnetName string = 'vnet-spoke3-${environmentPrefix}-cus'
 @description('Spoke 3 VNet address space')
-param spoke3VnetAddressSpace string = '10.16.1.0/26'
+param spoke3VnetAddressSpace string = '10.16.1.0/25'
 
 // Spoke 4 Configuration (West US)
 @description('Spoke 4 VNet name')

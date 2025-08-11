@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "157687037362153364"
+      "templateHash": "6663644716347917612"
     }
   },
   "parameters": {
@@ -144,7 +144,7 @@
     },
     "spoke3VnetAddressSpace": {
       "type": "string",
-      "defaultValue": "10.16.1.0/26",
+      "defaultValue": "10.16.1.0/25",
       "metadata": {
         "description": "Spoke 3 VNet address space"
       }
