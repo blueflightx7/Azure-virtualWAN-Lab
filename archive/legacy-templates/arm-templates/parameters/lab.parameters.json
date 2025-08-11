@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentPrefix": {
+      "value": "vwanlab"
+    },
+    "primaryRegion": {
+      "value": "East US"
+    },
+    "vwanHubAddressPrefix": {
+      "value": "10.0.0.0/16"
+    },
+    "spokeVnet1AddressSpace": {
+      "value": "10.1.0.0/16"
+    },
+    "spokeVnet2AddressSpace": {
+      "value": "10.2.0.0/16"
+    },
+    "adminUsername": {
+      "value": "azureuser"
+    },
+    "adminPassword": {
+      "value": "P@ssw0rd123!"
+    },
+    "vmSize": {
+      "value": "Standard_D2s_v3"
+    },
+    "tags": {
+      "value": {
+        "Environment": "Demo",
+        "Project": "VWAN-BGP-Lab",
+        "CreatedBy": "ARM",
+        "Owner": "Lab-User"
+      }
+    }
+  }
+}

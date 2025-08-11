@@ -1,0 +1,6 @@
+C:\Users\Public\Source\scripts\vwanlab\src\VwanLabAutomation\obj\Debug\net8.0\VwanLabAutomation.csproj.AssemblyReference.cache
+C:\Users\Public\Source\scripts\vwanlab\src\VwanLabAutomation\obj\Debug\net8.0\VwanLabAutomation.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Public\Source\scripts\vwanlab\src\VwanLabAutomation\obj\Debug\net8.0\VwanLabAutomation.AssemblyInfoInputs.cache
+C:\Users\Public\Source\scripts\vwanlab\src\VwanLabAutomation\obj\Debug\net8.0\VwanLabAutomation.AssemblyInfo.cs
+C:\Users\Public\Source\scripts\vwanlab\src\VwanLabAutomation\obj\Debug\net8.0\VwanLabAutomation.csproj.CoreCompileInputs.cache
+C:\Users\Public\Source\scripts\vwanlab\src\VwanLabAutomation\obj\Debug\net8.0\VwanLabAutomation.sourcelink.json

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.177.2456",
+      "templateHash": "1411951471928656593"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "nvaAsn": {
+      "type": "int",
+      "defaultValue": 65001,
+      "metadata": {
+        "description": "Local ASN for NVA BGP peering"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualHubs/bgpConnections",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', format('{0}-spoke3-route-server', parameters('environmentPrefix')), 'nva-bgp-peer')]",
+      "properties": {
+        "peerAsn": "[parameters('nvaAsn')]",
+        "peerIp": "[reference(resourceId('Microsoft.Network/networkInterfaces', format('{0}-spoke1-nva-nic', parameters('environmentPrefix'))), '2024-05-01').ipConfigurations[0].properties.privateIPAddress]"
+      }
+    }
+  ],
+  "outputs": {
+    "bgpConnectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/bgpConnections', format('{0}-spoke3-route-server', parameters('environmentPrefix')), 'nva-bgp-peer')]"
+    },
+    "bgpConnectionName": {
+      "type": "string",
+      "value": "nva-bgp-peer"
+    },
+    "nvaPeerIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', format('{0}-spoke1-nva-nic', parameters('environmentPrefix'))), '2024-05-01').ipConfigurations[0].properties.privateIPAddress]"
+    },
+    "nvaPeerAsn": {
+      "type": "int",
+      "value": "[parameters('nvaAsn')]"
+    },
+    "routeServerAsn": {
+      "type": "int",
+      "value": "[reference(resourceId('Microsoft.Network/virtualHubs', format('{0}-spoke3-route-server', parameters('environmentPrefix'))), '2024-05-01').virtualRouterAsn]"
+    },
+    "routeServerIps": {
+      "type": "array",
+      "value": "[reference(resourceId('Microsoft.Network/virtualHubs', format('{0}-spoke3-route-server', parameters('environmentPrefix'))), '2024-05-01').virtualRouterIps]"
+    }
+  }
+}

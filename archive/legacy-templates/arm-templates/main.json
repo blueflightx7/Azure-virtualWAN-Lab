@@ -1,0 +1,290 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "description": "Azure Virtual WAN lab environment with BGP peering, NVA, and Azure Route Server"
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "primaryRegion": {
+      "type": "string",
+      "defaultValue": "East US",
+      "metadata": {
+        "description": "Primary region for VWAN hub"
+      }
+    },
+    "vwanHubAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "VWAN hub address prefix"
+      }
+    },
+    "spokeVnet1AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/16",
+      "metadata": {
+        "description": "First spoke VNet address space"
+      }
+    },
+    "spokeVnet2AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.2.0.0/16",
+      "metadata": {
+        "description": "Second spoke VNet address space"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for VMs"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for VMs"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v3",
+      "metadata": {
+        "description": "VM size for NVA and test VMs"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab",
+        "Project": "VWAN-BGP-Lab",
+        "CreatedBy": "ARM"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    }
+  },
+  "variables": {
+    "vwanName": "[concat(parameters('environmentPrefix'), '-vwan')]",
+    "vwanHubName": "[concat(parameters('environmentPrefix'), '-hub')]",
+    "spokeVnet1Name": "[concat(parameters('environmentPrefix'), '-spoke1-vnet')]",
+    "spokeVnet2Name": "[concat(parameters('environmentPrefix'), '-spoke2-vnet')]",
+    "spokeVnet1GatewaySubnet": "[concat(substring(parameters('spokeVnet1AddressSpace'), 0, lastIndexOf(parameters('spokeVnet1AddressSpace'), '.')), '.0/24')]",
+    "spokeVnet1RouteServerSubnet": "[concat(substring(parameters('spokeVnet1AddressSpace'), 0, lastIndexOf(parameters('spokeVnet1AddressSpace'), '.')), '.1/24')]",
+    "spokeVnet1VmSubnet": "[concat(substring(parameters('spokeVnet1AddressSpace'), 0, lastIndexOf(parameters('spokeVnet1AddressSpace'), '.')), '.2/24')]",
+    "spokeVnet2VmSubnet": "[concat(substring(parameters('spokeVnet2AddressSpace'), 0, lastIndexOf(parameters('spokeVnet2AddressSpace'), '.')), '.0/24')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualWans",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('vwanName')]",
+      "location": "[parameters('primaryRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "disableVpnEncryption": false,
+        "allowBranchToBranchTraffic": true,
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('vwanHubName')]",
+      "location": "[parameters('primaryRegion')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualWans', variables('vwanName'))]"
+      ],
+      "properties": {
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', variables('vwanName'))]"
+        },
+        "addressPrefix": "[parameters('vwanHubAddressPrefix')]",
+        "sku": "Standard",
+        "hubRoutingPreference": "ExpressRoute",
+        "allowBranchToBranchTraffic": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[concat(parameters('environmentPrefix'), '-spoke1-nsg')]",
+      "location": "[parameters('primaryRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowRDP",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowBGP",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "179",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowICMP",
+            "properties": {
+              "protocol": "Icmp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2023-09-01",
+      "name": "[concat(parameters('environmentPrefix'), '-spoke2-nsg')]",
+      "location": "[parameters('primaryRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowRDP",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "AllowICMP",
+            "properties": {
+              "protocol": "Icmp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('spokeVnet1Name')]",
+      "location": "[parameters('primaryRegion')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environmentPrefix'), '-spoke1-nsg'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('spokeVnet1AddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[variables('spokeVnet1GatewaySubnet')]"
+            }
+          },
+          {
+            "name": "RouteServerSubnet",
+            "properties": {
+              "addressPrefix": "[variables('spokeVnet1RouteServerSubnet')]"
+            }
+          },
+          {
+            "name": "VmSubnet",
+            "properties": {
+              "addressPrefix": "[variables('spokeVnet1VmSubnet')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environmentPrefix'), '-spoke1-nsg'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('spokeVnet2Name')]",
+      "location": "[parameters('primaryRegion')]",
+      "tags": "[parameters('tags')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environmentPrefix'), '-spoke2-nsg'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('spokeVnet2AddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "VmSubnet",
+            "properties": {
+              "addressPrefix": "[variables('spokeVnet2VmSubnet')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environmentPrefix'), '-spoke2-nsg'))]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "vwanId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualWans', variables('vwanName'))]"
+    },
+    "vwanHubId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs', variables('vwanHubName'))]"
+    },
+    "spokeVnet1Id": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('spokeVnet1Name'))]"
+    },
+    "spokeVnet2Id": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('spokeVnet2Name'))]"
+    }
+  }
+}

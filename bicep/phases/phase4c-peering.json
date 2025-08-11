@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.177.2456",
+      "templateHash": "8264724396949103740"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', format('{0}-spoke1-vnet', parameters('environmentPrefix')), 'to-spoke3-peering')]",
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-spoke3-vnet', parameters('environmentPrefix')))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', format('{0}-spoke3-vnet', parameters('environmentPrefix')), 'to-spoke1-peering')]",
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', format('{0}-spoke1-vnet', parameters('environmentPrefix')))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "spoke1ToSpoke3PeeringId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', format('{0}-spoke1-vnet', parameters('environmentPrefix')), 'to-spoke3-peering')]"
+    },
+    "spoke3ToSpoke1PeeringId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', format('{0}-spoke3-vnet', parameters('environmentPrefix')), 'to-spoke1-peering')]"
+    },
+    "peeringState": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', format('{0}-spoke1-vnet', parameters('environmentPrefix')), 'to-spoke3-peering'), '2024-05-01').peeringState]"
+    }
+  }
+}

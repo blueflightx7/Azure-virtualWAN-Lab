@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.177.2456",
+      "templateHash": "6753991969781614511"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "vwanlab-admin",
+      "metadata": {
+        "description": "Admin username for VM"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for VM"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B2s",
+      "metadata": {
+        "description": "VM size"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab",
+        "Project": "VWAN-Demo",
+        "Purpose": "NVA-Routing"
+      },
+      "metadata": {
+        "description": "Tags for all resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-nva-pip', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-nva-nic', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[format('{0}/subnets/NvaSubnet', resourceId('Microsoft.Network/virtualNetworks', format('{0}-spoke1-vnet', parameters('environmentPrefix'))))]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-nva-pip', parameters('environmentPrefix')))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-nva-pip', parameters('environmentPrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-07-01",
+      "name": "[format('{0}-nva-vm', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "nva-vm",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": true,
+            "provisionVMAgent": true
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2022-datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            },
+            "name": "[format('{0}-nva-osdisk', parameters('environmentPrefix'))]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nva-nic', parameters('environmentPrefix')))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-nva-nic', parameters('environmentPrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2024-07-01",
+      "name": "[format('{0}/{1}', format('{0}-nva-vm', parameters('environmentPrefix')), 'ConfigureNVA')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.10",
+        "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "commandToExecute": "powershell -ExecutionPolicy Unrestricted -Command \"& {Enable-WindowsOptionalFeature -Online -FeatureName RemoteAccess -All; Enable-WindowsOptionalFeature -Online -FeatureName Routing -All; Import-Module RemoteAccess; Install-RemoteAccess -VpnType RoutingOnly; Set-NetIPInterface -InterfaceAlias \\\"Ethernet\\\" -Forwarding Enabled; netsh int ipv4 set global forwarding=enabled}\""
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-nva-vm', parameters('environmentPrefix')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vmId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Compute/virtualMachines', format('{0}-nva-vm', parameters('environmentPrefix')))]"
+    },
+    "vmName": {
+      "type": "string",
+      "value": "[format('{0}-nva-vm', parameters('environmentPrefix'))]"
+    },
+    "privateIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/networkInterfaces', format('{0}-nva-nic', parameters('environmentPrefix'))), '2024-05-01').ipConfigurations[0].properties.privateIPAddress]"
+    },
+    "publicIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('{0}-nva-pip', parameters('environmentPrefix'))), '2024-05-01').ipAddress]"
+    }
+  }
+}

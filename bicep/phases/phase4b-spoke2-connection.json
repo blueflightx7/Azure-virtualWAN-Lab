@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.177.2456",
+      "templateHash": "17658885425552474903"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "vwanHubName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-hub', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "VWAN hub name"
+      }
+    },
+    "spokeVnet2Name": {
+      "type": "string",
+      "defaultValue": "[format('{0}-spoke2-vnet', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Second spoke VNet name"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('vwanHubName'), format('{0}-connection', parameters('spokeVnet2Name')))]",
+      "properties": {
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": true,
+        "enableInternetSecurity": true,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spokeVnet2Name'))]"
+        },
+        "routingConfiguration": {
+          "associatedRouteTable": {
+            "id": "[format('{0}/hubRouteTables/defaultRouteTable', resourceId('Microsoft.Network/virtualHubs', parameters('vwanHubName')))]"
+          },
+          "propagatedRouteTables": {
+            "ids": [
+              {
+                "id": "[format('{0}/hubRouteTables/defaultRouteTable', resourceId('Microsoft.Network/virtualHubs', parameters('vwanHubName')))]"
+              }
+            ],
+            "labels": [
+              "default"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "connectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('vwanHubName'), format('{0}-connection', parameters('spokeVnet2Name')))]"
+    },
+    "connectionState": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('vwanHubName'), format('{0}-connection', parameters('spokeVnet2Name'))), '2024-05-01').provisioningState]"
+    }
+  }
+}

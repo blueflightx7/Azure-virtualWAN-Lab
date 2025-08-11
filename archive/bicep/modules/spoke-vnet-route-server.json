@@ -1,0 +1,321 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.36.177.2456",
+      "templateHash": "10538618719226087815"
+    }
+  },
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Spoke 3 VNet name"
+      }
+    },
+    "vnetAddressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "Spoke 3 VNet address space"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for deployment"
+      }
+    },
+    "environmentPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Environment prefix for naming"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for test VM"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for test VM"
+      }
+    },
+    "testVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_B1s",
+      "metadata": {
+        "description": "VM size for test VM"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "metadata": {
+        "description": "Tags to apply to resources"
+      }
+    }
+  },
+  "variables": {
+    "baseOctets": "[split(parameters('vnetAddressSpace'), '.')]",
+    "baseNetwork": "[format('{0}.{1}.{2}', variables('baseOctets')[0], variables('baseOctets')[1], variables('baseOctets')[2])]",
+    "routeServerSubnetPrefix": "[format('{0}.0/26', variables('baseNetwork'))]",
+    "vmSubnetPrefix": "[format('{0}.64/26', variables('baseNetwork'))]",
+    "gatewaySubnetPrefix": "[format('{0}.128/26', variables('baseNetwork'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "RouteServerSubnet",
+            "properties": {
+              "addressPrefix": "[variables('routeServerSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "VmSubnet",
+            "properties": {
+              "addressPrefix": "[variables('vmSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-spoke3-nsg', parameters('environmentPrefix')))]"
+              }
+            }
+          },
+          {
+            "name": "GatewaySubnet",
+            "properties": {
+              "addressPrefix": "[variables('gatewaySubnetPrefix')]"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-spoke3-nsg', parameters('environmentPrefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke3-nsg', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowBGPFromVirtualNetwork",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "179",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound",
+              "description": "Allow BGP peering within virtual network only"
+            }
+          },
+          {
+            "name": "AllowICMPFromVirtualNetwork",
+            "properties": {
+              "protocol": "Icmp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1200,
+              "direction": "Inbound",
+              "description": "Allow ICMP ping within virtual network only"
+            }
+          },
+          {
+            "name": "DenyAllOtherInbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 4096,
+              "direction": "Inbound",
+              "description": "Explicit deny all other inbound traffic"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke3-route-server-pip', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke3-test-vm-pip', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke3-test-vm-nic', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-spoke3-test-vm-pip', parameters('environmentPrefix')))]"
+              },
+              "subnet": {
+                "id": "[format('{0}/subnets/VmSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')))]"
+              }
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-spoke3-test-vm-pip', parameters('environmentPrefix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke3-route-server', parameters('environmentPrefix'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": "Standard",
+        "allowBranchToBranchTraffic": true,
+        "virtualRouterAsn": 65515
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/ipConfigurations",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', format('{0}-spoke3-route-server', parameters('environmentPrefix')), 'default')]",
+      "properties": {
+        "subnet": {
+          "id": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[0].id]"
+        },
+        "publicIPAddress": {
+          "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-spoke3-route-server-pip', parameters('environmentPrefix')))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualHubs', format('{0}-spoke3-route-server', parameters('environmentPrefix')))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-spoke3-route-server-pip', parameters('environmentPrefix')))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2024-07-01",
+      "name": "TestVM-Spoke3",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('testVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "TestVM-Spoke3",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": true,
+            "provisionVMAgent": true
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2022-datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "Standard_LRS"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-spoke3-test-vm-nic', parameters('environmentPrefix')))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', format('{0}-spoke3-test-vm-nic', parameters('environmentPrefix')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vnetId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+    },
+    "vnetName": {
+      "type": "string",
+      "value": "[parameters('vnetName')]"
+    },
+    "routeServerId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs', format('{0}-spoke3-route-server', parameters('environmentPrefix')))]"
+    },
+    "routeServerName": {
+      "type": "string",
+      "value": "[format('{0}-spoke3-route-server', parameters('environmentPrefix'))]"
+    },
+    "routeServerIpAddress": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/virtualHubs', format('{0}-spoke3-route-server', parameters('environmentPrefix'))), '2024-05-01').virtualRouterIps[0]]"
+    },
+    "testVmName": {
+      "type": "string",
+      "value": "TestVM-Spoke3"
+    }
+  }
+}

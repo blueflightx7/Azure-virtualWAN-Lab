@@ -1,0 +1,258 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install Azure CLI and Bicep",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "if (!(Get-Command az -ErrorAction SilentlyContinue)) { Write-Host 'Installing Azure CLI...' -ForegroundColor Yellow; winget install -e --id Microsoft.AzureCLI --silent } else { Write-Host 'Azure CLI already installed' -ForegroundColor Green }; Write-Host 'Installing/Updating Bicep...' -ForegroundColor Yellow; az bicep install; Write-Host 'Installation complete!' -ForegroundColor Green"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Bicep Templates",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Get-ChildItem './bicep/phases/*.bicep' | ForEach-Object { Write-Host \"Building $($_.Name)...\" -ForegroundColor Yellow; az bicep build --file $_.FullName }"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Validate Bicep Templates",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Write-Host 'Validating Phase 1 (Core Infrastructure)...' -ForegroundColor Yellow; az deployment group validate --resource-group '${input:resourceGroupName}' --template-file './bicep/phases/phase1-core.bicep' --parameters './bicep/parameters/lab.bicepparam'"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy VWAN Lab (PowerShell)",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./scripts/Deploy-VwanLab.ps1",
+                "-ResourceGroupName",
+                "${input:resourceGroupName}",
+                "-ParameterFile",
+                "./bicep/parameters/lab.bicepparam"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "isBackground": false
+        },
+        {
+            "label": "Test VWAN Lab Connectivity",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./scripts/Test-Connectivity.ps1",
+                "-ResourceGroupName",
+                "rg-vwanlab-demo",
+                "-Detailed"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Configure NVA VM",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./scripts/Configure-NvaVm.ps1",
+                "-ResourceGroupName",
+                "${input:resourceGroupName}",
+                "-VmName",
+                "vwanlab-nva-vm"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build .NET Automation Tool",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "build",
+                "./src/VwanLabAutomation/VwanLabAutomation.csproj"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ]
+        },
+        {
+            "label": "Run .NET Automation Tool - Status",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "run",
+                "--project",
+                "./src/VwanLabAutomation",
+                "--",
+                "status",
+                "--subscription",
+                "${input:subscriptionId}",
+                "--resource-group",
+                "${input:resourceGroupName}"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Cleanup VWAN Lab",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "run",
+                "--project",
+                "./src/VwanLabAutomation",
+                "--",
+                "cleanup",
+                "--subscription",
+                "${input:subscriptionId}",
+                "--resource-group",
+                "${input:resourceGroupName}"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "What-If Deployment",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./scripts/Deploy-VwanLab.ps1",
+                "-ResourceGroupName",
+                "${input:resourceGroupName}",
+                "-ParameterFile",
+                "./bicep/parameters/lab.bicepparam",
+                "-WhatIf"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Create Resource Group",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-Command",
+                "Connect-AzAccount -ErrorAction SilentlyContinue; New-AzResourceGroup -Name '${input:resourceGroupName}' -Location 'East US' -Force"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Fix RRAS Service",
+            "type": "shell",
+            "command": "pwsh",
+            "args": [
+                "-File",
+                "./scripts/Fix-RrasService.ps1",
+                "-ResourceGroupName",
+                "${input:resourceGroupName}"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "subscriptionId",
+            "description": "Azure Subscription ID",
+            "default": "",
+            "type": "promptString"
+        },
+        {
+            "id": "resourceGroupName",
+            "description": "Resource Group Name",
+            "default": "rg-networking-multi-vwanlab",
+            "type": "promptString"
+        }
+    ]
+}
