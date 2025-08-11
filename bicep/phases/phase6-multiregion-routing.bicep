@@ -6,14 +6,6 @@ targetScope = 'resourceGroup'
 @description('Environment prefix for resource naming')
 param environmentPrefix string = 'vwanlab'
 
-// Hub Names
-@description('West US VWAN Hub name')
-param westUsHubName string = 'vhub-${environmentPrefix}-wus'
-@description('Central US VWAN Hub name')
-param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
-@description('Southeast Asia VWAN Hub name')
-param southeastAsiaHubName string = 'vhub-${environmentPrefix}-sea'
-
 // VNet Names for route tables
 @description('Spoke 4 VNet name (West US)')
 param spoke4VnetName string = 'vnet-spoke4-${environmentPrefix}-wus'

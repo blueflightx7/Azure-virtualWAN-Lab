@@ -15,12 +15,6 @@ param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
 @description('VPN Gateway name')
 param vpnGatewayName string = 'vpngw-${environmentPrefix}-cus'
 
-@description('VPN Gateway SKU')
-param vpnGatewaySku string = 'VpnGw1'
-
-@description('Spoke 3 VNet name for local network gateway')
-param spoke3VnetName string = 'vnet-spoke3-${environmentPrefix}-cus'
-
 @description('Spoke 3 address space for local network gateway')
 param spoke3AddressSpace string = '10.16.1.0/26'
 
@@ -34,11 +28,6 @@ param tags object = {
 // Get existing Central US VWAN Hub
 resource centralUsHub 'Microsoft.Network/virtualHubs@2023-05-01' existing = {
   name: centralUsHubName
-}
-
-// Get existing Spoke 3 VNet 
-resource spoke3Vnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
-  name: spoke3VnetName
 }
 
 // Create VPN Gateway in VWAN Hub

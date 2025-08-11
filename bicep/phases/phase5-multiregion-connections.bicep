@@ -9,8 +9,6 @@ param environmentPrefix string = 'vwanlab'
 // Hub Names
 @description('West US VWAN Hub name')
 param westUsHubName string = 'vhub-${environmentPrefix}-wus'
-@description('Central US VWAN Hub name') 
-param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
 @description('Southeast Asia VWAN Hub name')
 param southeastAsiaHubName string = 'vhub-${environmentPrefix}-sea'
 
@@ -24,20 +22,9 @@ param spoke4VnetName string = 'vnet-spoke4-${environmentPrefix}-wus'
 @description('Spoke 5 VNet name (West US)')
 param spoke5VnetName string = 'vnet-spoke5-${environmentPrefix}-wus'
 
-@description('Tags to apply to all resources')
-param tags object = {
-  Environment: 'Lab-MultiRegion'
-  Project: 'VWAN-BGP-Firewall-Lab'
-  CreatedBy: 'Bicep'
-}
-
 // Get existing VWAN Hubs
 resource westUsHub 'Microsoft.Network/virtualHubs@2023-05-01' existing = {
   name: westUsHubName
-}
-
-resource centralUsHub 'Microsoft.Network/virtualHubs@2023-05-01' existing = {
-  name: centralUsHubName
 }
 
 resource southeastAsiaHub 'Microsoft.Network/virtualHubs@2023-05-01' existing = {

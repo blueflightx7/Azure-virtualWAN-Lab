@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "17415639539496952774"
+      "templateHash": "8598470390058855218"
     }
   },
   "parameters": {
@@ -35,20 +35,6 @@
       "defaultValue": "[format('vpngw-{0}-cus', parameters('environmentPrefix'))]",
       "metadata": {
         "description": "VPN Gateway name"
-      }
-    },
-    "vpnGatewaySku": {
-      "type": "string",
-      "defaultValue": "VpnGw1",
-      "metadata": {
-        "description": "VPN Gateway SKU"
-      }
-    },
-    "spoke3VnetName": {
-      "type": "string",
-      "defaultValue": "[format('vnet-spoke3-{0}-cus', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "Spoke 3 VNet name for local network gateway"
       }
     },
     "spoke3AddressSpace": {

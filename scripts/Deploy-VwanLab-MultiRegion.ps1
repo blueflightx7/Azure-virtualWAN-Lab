@@ -3,24 +3,24 @@
 
 <#
 .SYNOPSIS
-    Multi-Region Azure Virtual WAN Lab Deployment Script
+    [DEPRECATED] Multi-Region Azure Virtual WAN Lab Deployment Script
 
 .DESCRIPTION
-    This script deploys a comprehensive multi-region Azure VWAN lab environment with:
+    🚨 DEPRECATED: This script has been consolidated into Deploy-VwanLab.ps1
+    
+    Please use: .\Deploy-VwanLab.ps1 -Architecture MultiRegion
+    
+    This script originally deployed a comprehensive multi-region Azure VWAN lab environment with:
     - 3 VWAN Hubs (West US, Central US, Southeast Asia)
     - 5 Spoke VNets with specialized configurations
     - Azure Firewall Premium in Spoke 1
     - VPN connectivity for Spoke 3 via RRAS
     - Linux and Windows VMs across regions
     - Advanced routing and security configurations
-    
-    Features:
-    - Multi-region phased deployment (6 phases)
-    - Azure Firewall Premium with allow-all policies
-    - VPN Site-to-Site connectivity
-    - Automatic route table configuration
-    - Enhanced error handling and progress monitoring
-    - Cross-region connectivity testing
+
+.NOTES
+    This file is kept for reference but should not be used for new deployments.
+    Use the consolidated Deploy-VwanLab.ps1 script instead.
 
 .PARAMETER ResourceGroupName
     Name of the resource group to deploy to
@@ -167,7 +167,7 @@ function Write-PhaseHeader {
     
     Write-Host ""
     Write-Host "================================================================================================" -ForegroundColor Cyan
-    Write-Host "PHASE $PhaseNumber: $Description" -ForegroundColor Cyan
+    Write-Host "PHASE $PhaseNumber - $Description" -ForegroundColor Cyan
     Write-Host "================================================================================================" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -318,7 +318,7 @@ function Get-VmCredentials {
 }
 
 function Deploy-Phase1 {
-    param($DeployerPublicIp)
+    param([string]$DeployerPublicIp)
     
     Write-PhaseHeader -PhaseNumber 1 -Description "Core Infrastructure (3 VWAN Hubs, 5 VNets)"
     
@@ -355,7 +355,7 @@ function Deploy-Phase1 {
 }
 
 function Deploy-Phase2 {
-    param($Credentials)
+    param([object]$Credentials)
     
     if ($DeploymentMode -eq 'InfrastructureOnly') {
         Write-Host "⏭️ Skipping Phase 2 (Infrastructure Only mode)" -ForegroundColor Yellow
@@ -503,7 +503,7 @@ function Deploy-Phase5 {
 }
 
 function Deploy-Phase6 {
-    param($FirewallPrivateIp)
+    param([string]$FirewallPrivateIp)
     
     Write-PhaseHeader -PhaseNumber 6 -Description "Routing Configuration"
     
@@ -537,7 +537,7 @@ function Deploy-Phase6 {
 }
 
 function Show-DeploymentSummary {
-    param($Results)
+    param([hashtable]$Results)
     
     Write-Host ""
     Write-Host "================================================================================================" -ForegroundColor Green
@@ -554,11 +554,11 @@ function Show-DeploymentSummary {
     foreach ($phase in $Results.Keys | Sort-Object) {
         $result = $Results[$phase]
         if ($result.Skipped) {
-            Write-Host "  Phase $phase: SKIPPED" -ForegroundColor Yellow
+            Write-Host "  Phase $phase - SKIPPED" -ForegroundColor Yellow
         } elseif ($result.Success) {
-            Write-Host "  Phase $phase: SUCCESS ✅" -ForegroundColor Green
+            Write-Host "  Phase $phase - SUCCESS ✅" -ForegroundColor Green
         } else {
-            Write-Host "  Phase $phase: FAILED ❌" -ForegroundColor Red
+            Write-Host "  Phase $phase - FAILED ❌" -ForegroundColor Red
         }
     }
     
@@ -591,7 +591,19 @@ function Show-DeploymentSummary {
 # Main execution
 try {
     Write-Host ""
-    Write-Host "🚀 Azure VWAN Multi-Region Lab Deployment" -ForegroundColor Green
+    Write-Host "� DEPRECATION WARNING 🚨" -ForegroundColor Red
+    Write-Host "This script has been consolidated into Deploy-VwanLab.ps1" -ForegroundColor Yellow
+    Write-Host "Please use: .\Deploy-VwanLab.ps1 -Architecture MultiRegion" -ForegroundColor Yellow
+    Write-Host ""
+    
+    $response = Read-Host "Do you want to continue with this deprecated script? (y/N)"
+    if ($response -notmatch '^[Yy]$') {
+        Write-Host "Deployment cancelled. Use Deploy-VwanLab.ps1 instead." -ForegroundColor Yellow
+        exit 0
+    }
+    
+    Write-Host ""
+    Write-Host "�🚀 Azure VWAN Multi-Region Lab Deployment [DEPRECATED]" -ForegroundColor Green
     Write-Host "=======================================" -ForegroundColor Green
     
     if (-not $SkipPrerequisites) {

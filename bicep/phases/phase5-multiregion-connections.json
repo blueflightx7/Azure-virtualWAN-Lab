@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "15007209933652711068"
+      "templateHash": "471787025572759460"
     }
   },
   "parameters": {
@@ -21,13 +21,6 @@
       "defaultValue": "[format('vhub-{0}-wus', parameters('environmentPrefix'))]",
       "metadata": {
         "description": "West US VWAN Hub name"
-      }
-    },
-    "centralUsHubName": {
-      "type": "string",
-      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "Central US VWAN Hub name"
       }
     },
     "southeastAsiaHubName": {
@@ -63,17 +56,6 @@
       "defaultValue": "[format('vnet-spoke5-{0}-wus', parameters('environmentPrefix'))]",
       "metadata": {
         "description": "Spoke 5 VNet name (West US)"
-      }
-    },
-    "tags": {
-      "type": "object",
-      "defaultValue": {
-        "Environment": "Lab-MultiRegion",
-        "Project": "VWAN-BGP-Firewall-Lab",
-        "CreatedBy": "Bicep"
-      },
-      "metadata": {
-        "description": "Tags to apply to all resources"
       }
     }
   },

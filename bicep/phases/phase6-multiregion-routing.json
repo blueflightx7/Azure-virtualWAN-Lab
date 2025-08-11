@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "12783930153885069068"
+      "templateHash": "15111980142797862071"
     }
   },
   "parameters": {
@@ -14,27 +14,6 @@
       "defaultValue": "vwanlab",
       "metadata": {
         "description": "Environment prefix for resource naming"
-      }
-    },
-    "westUsHubName": {
-      "type": "string",
-      "defaultValue": "[format('vhub-{0}-wus', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "West US VWAN Hub name"
-      }
-    },
-    "centralUsHubName": {
-      "type": "string",
-      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "Central US VWAN Hub name"
-      }
-    },
-    "southeastAsiaHubName": {
-      "type": "string",
-      "defaultValue": "[format('vhub-{0}-sea', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "Southeast Asia VWAN Hub name"
       }
     },
     "spoke4VnetName": {
