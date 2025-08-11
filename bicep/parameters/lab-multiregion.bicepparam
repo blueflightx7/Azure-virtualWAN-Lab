@@ -8,13 +8,14 @@ using '../phases/phase1-multiregion-core.bicep'      // Core infrastructure (def
 // using '../phases/phase5-multiregion-connections.bicep' // VWAN connections
 // using '../phases/phase6-multiregion-routing.bicep'   // Static routes & BGP
 
-// 🚨 IMPORTANT: Deploy-VwanLab.ps1 builds parameters dynamically - this file is for manual deployment reference only
-// 🚨 NOTE: This is the new multi-region architecture configuration
+// 🚨 IMPORTANT: This parameter file contains parameters for ALL phases
+// 🚨 NOTE: Only uncomment the 'using' line for the phase you want to deploy
+// 🚨 RECOMMENDATION: Use Deploy-VwanLab.ps1 which handles parameters dynamically
 
 // Environment Configuration
 param environmentPrefix = 'vwanlab'
 
-// Multi-Region VWAN Configuration
+// Multi-Region VWAN Configuration  
 param vwanName = 'vwan-${environmentPrefix}'
 
 // VWAN Hub Configuration - 3 Hubs
@@ -54,15 +55,6 @@ param spoke4VnetAddressSpace = '10.0.2.0/26'
 param spoke5VnetName = 'vnet-spoke5-${environmentPrefix}-wus'
 param spoke5VnetAddressSpace = '10.0.3.0/26'
 
-// Azure Firewall Configuration
-param firewallName = 'afw-${environmentPrefix}-wus'
-param firewallPolicyName = 'afwp-${environmentPrefix}-wus'
-param firewallSku = 'Premium'  // Premium SKU for all features
-
-// VPN Gateway Configuration
-param vpnGatewayName = 'vpngw-${environmentPrefix}-cus'
-param vpnGatewaySku = 'VpnGw1'
-
 // Tags - Multi-Region Architecture
 param tags = {
   Environment: 'Lab-MultiRegion'
@@ -80,10 +72,26 @@ param tags = {
 // Security Configuration (optional)
 param deployerPublicIP = '' // Your public IP for RDP access
 
-// VM Configuration
-param adminUsername = 'azureuser'
-param linuxVmSize = 'Standard_B1s'     // Low spec for Linux VMs
-param windowsVmSize = 'Standard_B2s'   // 2 core 4GB for Windows VM
+// ==================================================================================
+// PHASE-SPECIFIC PARAMETERS (uncomment when deploying specific phases)
+// ==================================================================================
+
+// PHASE 2 PARAMETERS - Virtual Machines
+// param adminUsername = 'azureuser'
+// param linuxVmSize = 'Standard_B1s'     // Low spec for Linux VMs
+// param windowsVmSize = 'Standard_B2s'   // 2 core 4GB for Windows VM
+
+// PHASE 3 PARAMETERS - Azure Firewall
+// param firewallName = 'afw-${environmentPrefix}-wus'
+// param firewallPolicyName = 'afwp-${environmentPrefix}-wus'
+// param firewallSku = 'Premium'  // Premium SKU for all features
+
+// PHASE 4 PARAMETERS - VPN Gateway
+// param vpnGatewayName = 'vpngw-${environmentPrefix}-cus'
+// param vpnGatewaySku = 'VpnGw1'
+
+// PHASE 6 PARAMETERS - Routing Configuration
+// param azureFirewallPrivateIp = '10.0.1.68'  // Set from Phase 3 output
 
 // ==================================================================================
 // Multi-Region Architecture Notes:
@@ -92,4 +100,5 @@ param windowsVmSize = 'Standard_B2s'   // 2 core 4GB for Windows VM
 // - Southeast Asia Hub: Spoke 2 (Direct connection)
 // - Spoke 4 & 5 default route to Azure Firewall in Spoke 1
 // - Spoke 3 connects via IPSec VPN tunnel
+// - Use Deploy-VwanLab.ps1 for automated deployment with proper parameter handling
 // ==================================================================================

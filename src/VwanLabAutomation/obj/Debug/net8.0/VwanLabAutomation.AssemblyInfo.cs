@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("VwanLabAutomation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+97caa4050678e84a9b584881318a479d41715400")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3cf8c7f085a4aadce2842198f95bf98bc6d39ea9")]
 [assembly: System.Reflection.AssemblyProductAttribute("VwanLabAutomation")]
 [assembly: System.Reflection.AssemblyTitleAttribute("VwanLabAutomation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
