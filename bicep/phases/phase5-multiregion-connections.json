@@ -1,0 +1,152 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "15007209933652711068"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "westUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "West US VWAN Hub name"
+      }
+    },
+    "centralUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Central US VWAN Hub name"
+      }
+    },
+    "southeastAsiaHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-sea', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Southeast Asia VWAN Hub name"
+      }
+    },
+    "spoke1VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke1-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 1 VNet name (West US)"
+      }
+    },
+    "spoke2VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke2-{0}-sea', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 2 VNet name (Southeast Asia)"
+      }
+    },
+    "spoke4VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke4-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 4 VNet name (West US)"
+      }
+    },
+    "spoke5VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke5-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 5 VNet name (West US)"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab-MultiRegion",
+        "Project": "VWAN-BGP-Firewall-Lab",
+        "CreatedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('westUsHubName'), format('{0}-connection', parameters('spoke1VnetName')))]",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke1VnetName'))]"
+        },
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": true,
+        "enableInternetSecurity": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('southeastAsiaHubName'), format('{0}-connection', parameters('spoke2VnetName')))]",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke2VnetName'))]"
+        },
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": true,
+        "enableInternetSecurity": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('westUsHubName'), format('{0}-connection', parameters('spoke4VnetName')))]",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke4VnetName'))]"
+        },
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": true,
+        "enableInternetSecurity": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('westUsHubName'), format('{0}-connection', parameters('spoke5VnetName')))]",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke5VnetName'))]"
+        },
+        "allowHubToRemoteVnetTransit": true,
+        "allowRemoteVnetToUseHubVnetGateways": true,
+        "enableInternetSecurity": true
+      }
+    }
+  ],
+  "outputs": {
+    "spoke1ConnectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('westUsHubName'), format('{0}-connection', parameters('spoke1VnetName')))]"
+    },
+    "spoke2ConnectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('southeastAsiaHubName'), format('{0}-connection', parameters('spoke2VnetName')))]"
+    },
+    "spoke4ConnectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('westUsHubName'), format('{0}-connection', parameters('spoke4VnetName')))]"
+    },
+    "spoke5ConnectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('westUsHubName'), format('{0}-connection', parameters('spoke5VnetName')))]"
+    }
+  }
+}

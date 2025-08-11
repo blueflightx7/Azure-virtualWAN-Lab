@@ -1,0 +1,95 @@
+// Multi-Region Azure VWAN Lab Configuration
+// Updated architecture with Azure Firewall, VPN connectivity, and expanded spoke topology
+
+using '../phases/phase1-multiregion-core.bicep'      // Core infrastructure (default)
+// using '../phases/phase2-multiregion-vms.bicep'       // Virtual machines  
+// using '../phases/phase3-multiregion-firewall.bicep'  // Azure Firewall
+// using '../phases/phase4-multiregion-vpn.bicep'       // VPN Gateway
+// using '../phases/phase5-multiregion-connections.bicep' // VWAN connections
+// using '../phases/phase6-multiregion-routing.bicep'   // Static routes & BGP
+
+// 🚨 IMPORTANT: Deploy-VwanLab.ps1 builds parameters dynamically - this file is for manual deployment reference only
+// 🚨 NOTE: This is the new multi-region architecture configuration
+
+// Environment Configuration
+param environmentPrefix = 'vwanlab'
+
+// Multi-Region VWAN Configuration
+param vwanName = 'vwan-${environmentPrefix}'
+
+// VWAN Hub Configuration - 3 Hubs
+param westUsHubName = 'vhub-${environmentPrefix}-wus'
+param westUsHubAddressPrefix = '10.0.0.0/12'    // 10.0.0.0 - 10.15.255.255
+param westUsRegion = 'West US'
+
+param centralUsHubName = 'vhub-${environmentPrefix}-cus'  
+param centralUsHubAddressPrefix = '10.16.0.0/12'  // 10.16.0.0 - 10.31.255.255
+param centralUsRegion = 'Central US'
+
+param southeastAsiaHubName = 'vhub-${environmentPrefix}-sea'
+param southeastAsiaHubAddressPrefix = '10.32.0.0/12'  // 10.32.0.0 - 10.47.255.255
+param southeastAsiaRegion = 'Southeast Asia'
+
+// Spoke VNet Configuration
+// Spoke 1 (West US) - Azure Firewall Hub - 3x /26 subnets
+param spoke1VnetName = 'vnet-spoke1-${environmentPrefix}-wus'
+param spoke1VnetAddressSpace = '10.0.1.0/24'  // Room for 3x /26 subnets
+param spoke1VmSubnet = '10.0.1.0/26'         // VMs subnet
+param spoke1FirewallSubnet = '10.0.1.64/26'  // AzureFirewallSubnet
+param spoke1ManagementSubnet = '10.0.1.128/26' // Management subnet
+
+// Spoke 2 (Southeast Asia) - Direct VWAN connection
+param spoke2VnetName = 'vnet-spoke2-${environmentPrefix}-sea'
+param spoke2VnetAddressSpace = '10.32.1.0/26'
+
+// Spoke 3 (Central US) - VPN connection via RRAS
+param spoke3VnetName = 'vnet-spoke3-${environmentPrefix}-cus'
+param spoke3VnetAddressSpace = '10.16.1.0/26'
+
+// Spoke 4 (West US) - Routes to Spoke 1 Firewall
+param spoke4VnetName = 'vnet-spoke4-${environmentPrefix}-wus'
+param spoke4VnetAddressSpace = '10.0.2.0/26'
+
+// Spoke 5 (West US) - Routes to Spoke 1 Firewall  
+param spoke5VnetName = 'vnet-spoke5-${environmentPrefix}-wus'
+param spoke5VnetAddressSpace = '10.0.3.0/26'
+
+// Azure Firewall Configuration
+param firewallName = 'afw-${environmentPrefix}-wus'
+param firewallPolicyName = 'afwp-${environmentPrefix}-wus'
+param firewallSku = 'Premium'  // Premium SKU for all features
+
+// VPN Gateway Configuration
+param vpnGatewayName = 'vpngw-${environmentPrefix}-cus'
+param vpnGatewaySku = 'VpnGw1'
+
+// Tags - Multi-Region Architecture
+param tags = {
+  Environment: 'Lab-MultiRegion'
+  Project: 'VWAN-BGP-Firewall-Lab'
+  CreatedBy: 'Bicep'
+  Owner: 'DevOps'
+  LastUpdated: '2025-08-11'
+  Architecture: 'Multi-Region-VWAN-Firewall-VPN'
+  Purpose: 'BGP-Firewall-VPN-Connectivity-Testing'
+  CostProfile: 'Premium-Multi-Region'
+  Regions: 'WestUS-CentralUS-SoutheastAsia'
+  Version: 'v2.0-MultiRegion'
+}
+
+// Security Configuration (optional)
+param deployerPublicIP = '' // Your public IP for RDP access
+
+// VM Configuration
+param adminUsername = 'azureuser'
+param linuxVmSize = 'Standard_B1s'     // Low spec for Linux VMs
+param windowsVmSize = 'Standard_B2s'   // 2 core 4GB for Windows VM
+
+// ==================================================================================
+// Multi-Region Architecture Notes:
+// - West US Hub: Spoke 1 (Firewall), Spoke 4, Spoke 5
+// - Central US Hub: Spoke 3 (VPN connection)
+// - Southeast Asia Hub: Spoke 2 (Direct connection)
+// - Spoke 4 & 5 default route to Azure Firewall in Spoke 1
+// - Spoke 3 connects via IPSec VPN tunnel
+// ==================================================================================

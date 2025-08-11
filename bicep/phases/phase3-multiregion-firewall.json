@@ -1,0 +1,257 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "5154209419377248524"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "westUsRegion": {
+      "type": "string",
+      "defaultValue": "West US",
+      "metadata": {
+        "description": "West US region"
+      }
+    },
+    "spoke1VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke1-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 1 VNet name"
+      }
+    },
+    "firewallName": {
+      "type": "string",
+      "defaultValue": "[format('afw-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Azure Firewall name"
+      }
+    },
+    "firewallPolicyName": {
+      "type": "string",
+      "defaultValue": "[format('afwp-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Azure Firewall Policy name"
+      }
+    },
+    "firewallSku": {
+      "type": "string",
+      "defaultValue": "Premium",
+      "metadata": {
+        "description": "Azure Firewall SKU"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab-MultiRegion",
+        "Project": "VWAN-BGP-Firewall-Lab",
+        "CreatedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-pip', parameters('firewallName'))]",
+      "location": "[parameters('westUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-mgmt-pip', parameters('firewallName'))]",
+      "location": "[parameters('westUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "sku": {
+        "name": "Standard",
+        "tier": "Regional"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('firewallPolicyName')]",
+      "location": "[parameters('westUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "tier": "[parameters('firewallSku')]"
+        },
+        "threatIntelMode": "Alert",
+        "threatIntelWhitelist": {
+          "fqdns": [],
+          "ipAddresses": []
+        },
+        "dnsSettings": {
+          "servers": [],
+          "enableProxy": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/firewallPolicies/ruleCollectionGroups",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('firewallPolicyName'), 'DefaultRuleCollectionGroup')]",
+      "properties": {
+        "priority": 1000,
+        "ruleCollections": [
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "AllowAllNetworkRules",
+            "priority": 1000,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "NetworkRule",
+                "name": "AllowAllTraffic",
+                "ipProtocols": [
+                  "Any"
+                ],
+                "sourceAddresses": [
+                  "*"
+                ],
+                "destinationAddresses": [
+                  "*"
+                ],
+                "destinationPorts": [
+                  "*"
+                ]
+              }
+            ]
+          },
+          {
+            "ruleCollectionType": "FirewallPolicyFilterRuleCollection",
+            "name": "AllowAllApplicationRules",
+            "priority": 1100,
+            "action": {
+              "type": "Allow"
+            },
+            "rules": [
+              {
+                "ruleType": "ApplicationRule",
+                "name": "AllowAllWeb",
+                "protocols": [
+                  {
+                    "protocolType": "Http",
+                    "port": 80
+                  },
+                  {
+                    "protocolType": "Https",
+                    "port": 443
+                  }
+                ],
+                "sourceAddresses": [
+                  "*"
+                ],
+                "targetFqdns": [
+                  "*"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/azureFirewalls",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('firewallName')]",
+      "location": "[parameters('westUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "sku": {
+          "name": "AZFW_VNet",
+          "tier": "[parameters('firewallSku')]"
+        },
+        "threatIntelMode": "Alert",
+        "firewallPolicy": {
+          "id": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "AzureFirewallIpConfiguration",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName')))]"
+              },
+              "subnet": {
+                "id": "[format('{0}/subnets/AzureFirewallSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('spoke1VnetName')))]"
+              }
+            }
+          }
+        ],
+        "managementIpConfiguration": {
+          "name": "AzureFirewallMgmtIpConfiguration",
+          "properties": {
+            "publicIPAddress": {
+              "id": "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-mgmt-pip', parameters('firewallName')))]"
+            },
+            "subnet": {
+              "id": "[format('{0}/subnets/AzureFirewallManagementSubnet', resourceId('Microsoft.Network/virtualNetworks', parameters('spoke1VnetName')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-mgmt-pip', parameters('firewallName')))]",
+        "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]",
+        "[resourceId('Microsoft.Network/firewallPolicies/ruleCollectionGroups', parameters('firewallPolicyName'), 'DefaultRuleCollectionGroup')]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "firewallId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName'))]"
+    },
+    "firewallName": {
+      "type": "string",
+      "value": "[parameters('firewallName')]"
+    },
+    "firewallPrivateIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/azureFirewalls', parameters('firewallName')), '2024-05-01').ipConfigurations[0].properties.privateIPAddress]"
+    },
+    "firewallPublicIp": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', format('{0}-pip', parameters('firewallName'))), '2024-05-01').ipAddress]"
+    },
+    "firewallPolicyId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/firewallPolicies', parameters('firewallPolicyName'))]"
+    }
+  }
+}

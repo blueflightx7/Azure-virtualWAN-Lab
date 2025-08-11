@@ -6,21 +6,100 @@
 [![PowerShell](https://img.shields.io/badge/Scripts-PowerShell-blue)](https://docs.microsoft.com/en-us/powershell/)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple)](https://dotnet.microsoft.com/)
 
-A comprehensive Azure Virtual WAN lab environment demonstrating advanced networking concepts including BGP peering, Azure Route Server integration, Network Virtual Appliances (NVAs), and enterprise-grade automation. Features **performance-optimized deployment**, **unified architecture**, and **intelligent resource management**.
+A comprehensive Azure Virtual WAN lab environment demonstrating advanced networking concepts including BGP peering, Azure Route Server integration, Network Virtual Appliances (NVAs), **Azure Firewall Premium**, **multi-region connectivity**, and enterprise-grade automation. Features **multi-region deployment**, **VPN connectivity**, and **intelligent resource management**.
 
 ## 🎯 Overview
 
-This lab environment showcases:
-- **Azure Virtual WAN Hub** with branch-to-branch connectivity
+This lab environment showcases two architecture options:
+
+### **🔥 NEW: Multi-Region Architecture (v2.0)**
+- **3 VWAN Hubs** across West US, Central US, and Southeast Asia
+- **Azure Firewall Premium** as security hub in West US
+- **VPN Site-to-Site** connectivity via RRAS
+- **5 Spoke VNets** with specialized routing configurations
+- **Cross-region connectivity** and traffic steering
+
+### **Classic Architecture (v1.0)**
+- **Single VWAN Hub** with branch-to-branch connectivity
 - **Network Virtual Appliances (NVAs)** with RRAS and BGP configuration
 - **Azure Route Server** integration for advanced routing scenarios
 - **Multi-spoke architecture** demonstrating various connectivity patterns
-- **Enterprise automation** with .NET 8 management tools
-- **Phased deployment** approach for reliable resource provisioning
 
 > **💡 Perfect for**: Network engineers, Azure architects, and DevOps teams learning advanced Azure networking concepts.
 
-## 🏗️ Architecture
+## 🌐 Multi-Region Architecture (v2.0)
+
+```mermaid
+graph TB
+    subgraph "West US Region"
+        WHub["VWAN Hub West<br/>10.0.0.0/12"]
+        
+        subgraph "Spoke 1 - Firewall Hub"
+            S1["VNet 10.0.1.0/24"]
+            FW["Azure Firewall<br/>Premium"]
+            WinVM["Windows VM"]
+            LinVM1["Linux VM"]
+        end
+        
+        subgraph "Spoke 4 - Protected"
+            S4["VNet 10.0.2.0/26"]
+            LinVM4["Linux VM"]
+        end
+        
+        subgraph "Spoke 5 - Protected"
+            S5["VNet 10.0.3.0/26"]
+            LinVM5["Linux VM"]
+        end
+    end
+    
+    subgraph "Central US Region"
+        CHub["VWAN Hub Central<br/>10.16.0.0/12"]
+        VPN["VPN Gateway"]
+        
+        subgraph "Spoke 3 - VPN Site"
+            S3["VNet 10.16.1.0/26"]
+            RRAS["RRAS VM"]
+        end
+    end
+    
+    subgraph "Southeast Asia Region"
+        SHub["VWAN Hub SEA<br/>10.32.0.0/12"]
+        
+        subgraph "Spoke 2 - Remote"
+            S2["VNet 10.32.1.0/26"]
+            LinVM2["Linux VM"]
+        end
+    end
+    
+    %% VWAN Connections
+    WHub -.->|Hub-to-Hub| CHub
+    CHub -.->|Hub-to-Hub| SHub
+    WHub -.->|Hub-to-Hub| SHub
+    
+    %% Spoke Connections
+    WHub --- S1
+    WHub --- S4
+    WHub --- S5
+    CHub --- VPN
+    VPN -.->|IPSec Tunnel| RRAS
+    SHub --- S2
+    
+    %% Traffic Flow
+    S4 -.->|Default Route| FW
+    S5 -.->|Default Route| FW
+    
+    classDef firewall fill:#ff6b6b,stroke:#d63447,color:#fff
+    classDef hub fill:#4ecdc4,stroke:#26d0ce,color:#fff
+    classDef spoke fill:#45b7d1,stroke:#2e86ab,color:#fff
+    classDef vm fill:#96ceb4,stroke:#6ab04c,color:#fff
+    
+    class FW firewall
+    class WHub,CHub,SHub hub
+    class S1,S2,S3,S4,S5 spoke
+    class WinVM,LinVM1,LinVM2,LinVM4,LinVM5,RRAS vm
+```
+
+## 🏗️ Classic Architecture (v1.0)
 
 ```mermaid
 graph TB
@@ -65,15 +144,32 @@ graph TB
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) or [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/install-az-ps)
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) (for automation tools)
 
-### 1-Minute Deployment
+### 🔥 Multi-Region Lab (v2.0) - RECOMMENDED
 
 ```powershell
 # Clone the repository
-git clone https://github.com/shahankarim_microsoft/LAB-AZ-VWAN-SPOKEX.git
-cd LAB-AZ-VWAN-SPOKEX
+git clone https://github.com/Azure-VWAN-Lab/Azure-VWAN-Lab.git
+cd Azure-VWAN-Lab
 
-# Deploy the complete lab (standard security)
-.\scripts\Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-demo"
+# Deploy complete multi-region lab with Azure Firewall
+.\scripts\Deploy-VwanLab-MultiRegion.ps1 -ResourceGroupName "rg-vwanlab-multiregion"
+
+# OR: Deploy infrastructure only (no VMs)
+.\scripts\Deploy-VwanLab-MultiRegion.ps1 -ResourceGroupName "rg-vwanlab-mr" -DeploymentMode InfrastructureOnly
+
+# OR: Deploy specific phase only
+.\scripts\Deploy-VwanLab-MultiRegion.ps1 -ResourceGroupName "rg-vwanlab-mr" -Phase 3
+```
+
+### 🎯 Classic Lab (v1.0)
+
+```powershell
+# Clone the repository
+git clone https://github.com/Azure-VWAN-Lab/Azure-VWAN-Lab.git
+cd Azure-VWAN-Lab
+
+# Deploy the complete classic lab (standard security)
+.\scripts\Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-classic"
 
 # OR: Deploy with enhanced security (JIT + Auto-Shutdown)
 .\scripts\Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-security" -SfiEnable -EnableAutoShutdown
@@ -87,7 +183,8 @@ cd LAB-AZ-VWAN-SPOKEX
 
 | Document | Description |
 |----------|-------------|
-| **[🏗️ Architecture Guide](docs/architecture.md)** | Detailed architecture overview and component relationships |
+| **[� Multi-Region Architecture](docs/multiregion-architecture.md)** | **NEW**: Comprehensive multi-region VWAN lab with Azure Firewall |
+| **[�🏗️ Architecture Guide](docs/architecture.md)** | Classic architecture overview and component relationships |
 | **[🚀 Deployment Guide](docs/deployment.md)** | Step-by-step deployment instructions and options |
 | **[👤 User Guide](docs/user-guide.md)** | Day-to-day usage and management procedures |
 | **[⚙️ Configuration Guide](docs/configuration.md)** | Advanced configuration and customization options |

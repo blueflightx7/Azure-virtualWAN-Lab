@@ -1,0 +1,1163 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "157687037362153364"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "vwanName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-vwan', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Virtual WAN name"
+      }
+    },
+    "westUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "West US VWAN hub name"
+      }
+    },
+    "westUsHubAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/12",
+      "metadata": {
+        "description": "West US VWAN hub address prefix"
+      }
+    },
+    "westUsRegion": {
+      "type": "string",
+      "defaultValue": "West US",
+      "metadata": {
+        "description": "West US region"
+      }
+    },
+    "centralUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Central US VWAN hub name"
+      }
+    },
+    "centralUsHubAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.16.0.0/12",
+      "metadata": {
+        "description": "Central US VWAN hub address prefix"
+      }
+    },
+    "centralUsRegion": {
+      "type": "string",
+      "defaultValue": "Central US",
+      "metadata": {
+        "description": "Central US region"
+      }
+    },
+    "southeastAsiaHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-sea', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Southeast Asia VWAN hub name"
+      }
+    },
+    "southeastAsiaHubAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.32.0.0/12",
+      "metadata": {
+        "description": "Southeast Asia VWAN hub address prefix"
+      }
+    },
+    "southeastAsiaRegion": {
+      "type": "string",
+      "defaultValue": "Southeast Asia",
+      "metadata": {
+        "description": "Southeast Asia region"
+      }
+    },
+    "spoke1VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke1-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 1 VNet name"
+      }
+    },
+    "spoke1VnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "Spoke 1 VNet address space"
+      }
+    },
+    "spoke1VmSubnet": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/26",
+      "metadata": {
+        "description": "Spoke 1 VM subnet"
+      }
+    },
+    "spoke1FirewallSubnet": {
+      "type": "string",
+      "defaultValue": "10.0.1.64/26",
+      "metadata": {
+        "description": "Spoke 1 Firewall subnet"
+      }
+    },
+    "spoke1ManagementSubnet": {
+      "type": "string",
+      "defaultValue": "10.0.1.128/26",
+      "metadata": {
+        "description": "Spoke 1 Management subnet"
+      }
+    },
+    "spoke2VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke2-{0}-sea', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 2 VNet name"
+      }
+    },
+    "spoke2VnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.32.1.0/26",
+      "metadata": {
+        "description": "Spoke 2 VNet address space"
+      }
+    },
+    "spoke3VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke3-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 3 VNet name"
+      }
+    },
+    "spoke3VnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.16.1.0/26",
+      "metadata": {
+        "description": "Spoke 3 VNet address space"
+      }
+    },
+    "spoke4VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke4-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 4 VNet name"
+      }
+    },
+    "spoke4VnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.0.2.0/26",
+      "metadata": {
+        "description": "Spoke 4 VNet address space"
+      }
+    },
+    "spoke5VnetName": {
+      "type": "string",
+      "defaultValue": "[format('vnet-spoke5-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Spoke 5 VNet name"
+      }
+    },
+    "spoke5VnetAddressSpace": {
+      "type": "string",
+      "defaultValue": "10.0.3.0/26",
+      "metadata": {
+        "description": "Spoke 5 VNet address space"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab-MultiRegion",
+        "Project": "VWAN-BGP-Firewall-Lab",
+        "CreatedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    },
+    "deployerPublicIP": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Deployer public IP for RDP access (optional)"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualWans",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('vwanName')]",
+      "location": "[parameters('westUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "disableVpnEncryption": false,
+        "allowBranchToBranchTraffic": true,
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('westUsHubName')]",
+      "location": "[parameters('westUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "addressPrefix": "[parameters('westUsHubAddressPrefix')]",
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('centralUsHubName')]",
+      "location": "[parameters('centralUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "addressPrefix": "[parameters('centralUsHubAddressPrefix')]",
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('southeastAsiaHubName')]",
+      "location": "[parameters('southeastAsiaRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "addressPrefix": "[parameters('southeastAsiaHubAddressPrefix')]",
+        "virtualWan": {
+          "id": "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "spoke1-vnet-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('spoke1VnetName')]"
+          },
+          "vnetAddressSpace": {
+            "value": "[parameters('spoke1VnetAddressSpace')]"
+          },
+          "location": {
+            "value": "[parameters('westUsRegion')]"
+          },
+          "environmentPrefix": {
+            "value": "[parameters('environmentPrefix')]"
+          },
+          "vmSubnet": {
+            "value": "[parameters('spoke1VmSubnet')]"
+          },
+          "firewallSubnet": {
+            "value": "[parameters('spoke1FirewallSubnet')]"
+          },
+          "managementSubnet": {
+            "value": "[parameters('spoke1ManagementSubnet')]"
+          },
+          "deployerPublicIP": {
+            "value": "[parameters('deployerPublicIP')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "2106331480861921921"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet name"
+              }
+            },
+            "vnetAddressSpace": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet address space"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "environmentPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment prefix for naming"
+              }
+            },
+            "vmSubnet": {
+              "type": "string",
+              "metadata": {
+                "description": "VM subnet address prefix"
+              }
+            },
+            "firewallSubnet": {
+              "type": "string",
+              "metadata": {
+                "description": "Firewall subnet address prefix"
+              }
+            },
+            "managementSubnet": {
+              "type": "string",
+              "metadata": {
+                "description": "Management subnet address prefix"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "deployerPublicIP": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Deployer public IP for RDP access (optional)"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}-{1}-vm-nsg', parameters('environmentPrefix'), parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": "[concat(createArray(createObject('name', 'AllowBGPFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '179', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1100, 'direction', 'Inbound', 'description', 'Allow BGP peering within virtual network only')), createObject('name', 'AllowICMPFromVirtualNetwork', 'properties', createObject('protocol', 'Icmp', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1200, 'direction', 'Inbound', 'description', 'Allow ICMP ping within virtual network only')), createObject('name', 'AllowSSHFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1300, 'direction', 'Inbound', 'description', 'Allow SSH within virtual network only'))), if(not(equals(parameters('deployerPublicIP'), '')), createArray(createObject('name', 'AllowRDPFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '3389', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1000, 'direction', 'Inbound', 'description', 'Allow RDP from deployer IP')), createObject('name', 'AllowSSHFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1001, 'direction', 'Inbound', 'description', 'Allow SSH from deployer IP'))), createArray()))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}-{1}-mgmt-nsg', parameters('environmentPrefix'), parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": "[concat(createArray(createObject('name', 'AllowManagementTraffic', 'properties', createObject('protocol', '*', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1100, 'direction', 'Inbound', 'description', 'Allow management traffic within virtual network'))), if(not(equals(parameters('deployerPublicIP'), '')), createArray(createObject('name', 'AllowManagementFromDeployer', 'properties', createObject('protocol', '*', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1000, 'direction', 'Inbound', 'description', 'Allow management from deployer IP'))), createArray()))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressSpace')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "VmSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('vmSubnet')]",
+                      "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-vm-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+                      }
+                    }
+                  },
+                  {
+                    "name": "AzureFirewallSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('firewallSubnet')]"
+                    }
+                  },
+                  {
+                    "name": "AzureFirewallManagementSubnet",
+                    "properties": {
+                      "addressPrefix": "[parameters('managementSubnet')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-vm-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[0].id]"
+            },
+            "firewallSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[1].id]"
+            },
+            "managementSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[2].id]"
+            },
+            "vmNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-vm-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+            },
+            "mgmtNsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-mgmt-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "spoke2-vnet-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('spoke2VnetName')]"
+          },
+          "vnetAddressSpace": {
+            "value": "[parameters('spoke2VnetAddressSpace')]"
+          },
+          "location": {
+            "value": "[parameters('southeastAsiaRegion')]"
+          },
+          "environmentPrefix": {
+            "value": "[parameters('environmentPrefix')]"
+          },
+          "deployerPublicIP": {
+            "value": "[parameters('deployerPublicIP')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "1345566728956250253"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet name"
+              }
+            },
+            "vnetAddressSpace": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet address space"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "environmentPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment prefix for naming"
+              }
+            },
+            "includeGatewaySubnet": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Include Gateway subnet for VPN connection"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "deployerPublicIP": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Deployer public IP for RDP access (optional)"
+              }
+            }
+          },
+          "variables": {
+            "addressParts": "[split(parameters('vnetAddressSpace'), '/')]",
+            "addressBase": "[split(variables('addressParts')[0], '.')]",
+            "baseNetwork": "[format('{0}.{1}.{2}', variables('addressBase')[0], variables('addressBase')[1], variables('addressBase')[2])]",
+            "prefixLength": "[int(variables('addressParts')[1])]",
+            "vmSubnetPrefix": "[if(equals(variables('prefixLength'), 26), parameters('vnetAddressSpace'), format('{0}.0/27', variables('baseNetwork')))]",
+            "gatewaySubnetPrefix": "[format('{0}.32/27', variables('baseNetwork'))]",
+            "baseSubnets": [
+              {
+                "name": "VmSubnet",
+                "properties": {
+                  "addressPrefix": "[variables('vmSubnetPrefix')]",
+                  "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+                  }
+                }
+              }
+            ],
+            "gatewaySubnet": "[if(parameters('includeGatewaySubnet'), createArray(createObject('name', 'GatewaySubnet', 'properties', createObject('addressPrefix', variables('gatewaySubnetPrefix')))), createArray())]",
+            "allSubnets": "[concat(variables('baseSubnets'), variables('gatewaySubnet'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": "[concat(createArray(createObject('name', 'AllowBGPFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '179', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1100, 'direction', 'Inbound', 'description', 'Allow BGP peering within virtual network only')), createObject('name', 'AllowICMPFromVirtualNetwork', 'properties', createObject('protocol', 'Icmp', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1200, 'direction', 'Inbound', 'description', 'Allow ICMP ping within virtual network only')), createObject('name', 'AllowSSHFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1300, 'direction', 'Inbound', 'description', 'Allow SSH within virtual network only'))), if(not(equals(parameters('deployerPublicIP'), '')), createArray(createObject('name', 'AllowSSHFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1000, 'direction', 'Inbound', 'description', 'Allow SSH from deployer IP')), createObject('name', 'AllowRDPFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '3389', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1001, 'direction', 'Inbound', 'description', 'Allow RDP from deployer IP'))), createArray()))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressSpace')]"
+                  ]
+                },
+                "subnets": "[variables('allSubnets')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[0].id]"
+            },
+            "gatewaySubnetId": {
+              "type": "string",
+              "value": "[if(parameters('includeGatewaySubnet'), reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[1].id, '')]"
+            },
+            "nsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "spoke3-vnet-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('spoke3VnetName')]"
+          },
+          "vnetAddressSpace": {
+            "value": "[parameters('spoke3VnetAddressSpace')]"
+          },
+          "location": {
+            "value": "[parameters('centralUsRegion')]"
+          },
+          "environmentPrefix": {
+            "value": "[parameters('environmentPrefix')]"
+          },
+          "deployerPublicIP": {
+            "value": "[parameters('deployerPublicIP')]"
+          },
+          "includeGatewaySubnet": {
+            "value": true
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "1345566728956250253"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet name"
+              }
+            },
+            "vnetAddressSpace": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet address space"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "environmentPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment prefix for naming"
+              }
+            },
+            "includeGatewaySubnet": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Include Gateway subnet for VPN connection"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "deployerPublicIP": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Deployer public IP for RDP access (optional)"
+              }
+            }
+          },
+          "variables": {
+            "addressParts": "[split(parameters('vnetAddressSpace'), '/')]",
+            "addressBase": "[split(variables('addressParts')[0], '.')]",
+            "baseNetwork": "[format('{0}.{1}.{2}', variables('addressBase')[0], variables('addressBase')[1], variables('addressBase')[2])]",
+            "prefixLength": "[int(variables('addressParts')[1])]",
+            "vmSubnetPrefix": "[if(equals(variables('prefixLength'), 26), parameters('vnetAddressSpace'), format('{0}.0/27', variables('baseNetwork')))]",
+            "gatewaySubnetPrefix": "[format('{0}.32/27', variables('baseNetwork'))]",
+            "baseSubnets": [
+              {
+                "name": "VmSubnet",
+                "properties": {
+                  "addressPrefix": "[variables('vmSubnetPrefix')]",
+                  "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+                  }
+                }
+              }
+            ],
+            "gatewaySubnet": "[if(parameters('includeGatewaySubnet'), createArray(createObject('name', 'GatewaySubnet', 'properties', createObject('addressPrefix', variables('gatewaySubnetPrefix')))), createArray())]",
+            "allSubnets": "[concat(variables('baseSubnets'), variables('gatewaySubnet'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": "[concat(createArray(createObject('name', 'AllowBGPFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '179', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1100, 'direction', 'Inbound', 'description', 'Allow BGP peering within virtual network only')), createObject('name', 'AllowICMPFromVirtualNetwork', 'properties', createObject('protocol', 'Icmp', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1200, 'direction', 'Inbound', 'description', 'Allow ICMP ping within virtual network only')), createObject('name', 'AllowSSHFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1300, 'direction', 'Inbound', 'description', 'Allow SSH within virtual network only'))), if(not(equals(parameters('deployerPublicIP'), '')), createArray(createObject('name', 'AllowSSHFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1000, 'direction', 'Inbound', 'description', 'Allow SSH from deployer IP')), createObject('name', 'AllowRDPFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '3389', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1001, 'direction', 'Inbound', 'description', 'Allow RDP from deployer IP'))), createArray()))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressSpace')]"
+                  ]
+                },
+                "subnets": "[variables('allSubnets')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[0].id]"
+            },
+            "gatewaySubnetId": {
+              "type": "string",
+              "value": "[if(parameters('includeGatewaySubnet'), reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[1].id, '')]"
+            },
+            "nsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "spoke4-vnet-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('spoke4VnetName')]"
+          },
+          "vnetAddressSpace": {
+            "value": "[parameters('spoke4VnetAddressSpace')]"
+          },
+          "location": {
+            "value": "[parameters('westUsRegion')]"
+          },
+          "environmentPrefix": {
+            "value": "[parameters('environmentPrefix')]"
+          },
+          "deployerPublicIP": {
+            "value": "[parameters('deployerPublicIP')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "1345566728956250253"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet name"
+              }
+            },
+            "vnetAddressSpace": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet address space"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "environmentPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment prefix for naming"
+              }
+            },
+            "includeGatewaySubnet": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Include Gateway subnet for VPN connection"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "deployerPublicIP": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Deployer public IP for RDP access (optional)"
+              }
+            }
+          },
+          "variables": {
+            "addressParts": "[split(parameters('vnetAddressSpace'), '/')]",
+            "addressBase": "[split(variables('addressParts')[0], '.')]",
+            "baseNetwork": "[format('{0}.{1}.{2}', variables('addressBase')[0], variables('addressBase')[1], variables('addressBase')[2])]",
+            "prefixLength": "[int(variables('addressParts')[1])]",
+            "vmSubnetPrefix": "[if(equals(variables('prefixLength'), 26), parameters('vnetAddressSpace'), format('{0}.0/27', variables('baseNetwork')))]",
+            "gatewaySubnetPrefix": "[format('{0}.32/27', variables('baseNetwork'))]",
+            "baseSubnets": [
+              {
+                "name": "VmSubnet",
+                "properties": {
+                  "addressPrefix": "[variables('vmSubnetPrefix')]",
+                  "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+                  }
+                }
+              }
+            ],
+            "gatewaySubnet": "[if(parameters('includeGatewaySubnet'), createArray(createObject('name', 'GatewaySubnet', 'properties', createObject('addressPrefix', variables('gatewaySubnetPrefix')))), createArray())]",
+            "allSubnets": "[concat(variables('baseSubnets'), variables('gatewaySubnet'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": "[concat(createArray(createObject('name', 'AllowBGPFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '179', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1100, 'direction', 'Inbound', 'description', 'Allow BGP peering within virtual network only')), createObject('name', 'AllowICMPFromVirtualNetwork', 'properties', createObject('protocol', 'Icmp', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1200, 'direction', 'Inbound', 'description', 'Allow ICMP ping within virtual network only')), createObject('name', 'AllowSSHFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1300, 'direction', 'Inbound', 'description', 'Allow SSH within virtual network only'))), if(not(equals(parameters('deployerPublicIP'), '')), createArray(createObject('name', 'AllowSSHFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1000, 'direction', 'Inbound', 'description', 'Allow SSH from deployer IP')), createObject('name', 'AllowRDPFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '3389', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1001, 'direction', 'Inbound', 'description', 'Allow RDP from deployer IP'))), createArray()))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressSpace')]"
+                  ]
+                },
+                "subnets": "[variables('allSubnets')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[0].id]"
+            },
+            "gatewaySubnetId": {
+              "type": "string",
+              "value": "[if(parameters('includeGatewaySubnet'), reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[1].id, '')]"
+            },
+            "nsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "spoke5-vnet-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "vnetName": {
+            "value": "[parameters('spoke5VnetName')]"
+          },
+          "vnetAddressSpace": {
+            "value": "[parameters('spoke5VnetAddressSpace')]"
+          },
+          "location": {
+            "value": "[parameters('westUsRegion')]"
+          },
+          "environmentPrefix": {
+            "value": "[parameters('environmentPrefix')]"
+          },
+          "deployerPublicIP": {
+            "value": "[parameters('deployerPublicIP')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.37.4.10188",
+              "templateHash": "1345566728956250253"
+            }
+          },
+          "parameters": {
+            "vnetName": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet name"
+              }
+            },
+            "vnetAddressSpace": {
+              "type": "string",
+              "metadata": {
+                "description": "VNet address space"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Azure region for deployment"
+              }
+            },
+            "environmentPrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Environment prefix for naming"
+              }
+            },
+            "includeGatewaySubnet": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Include Gateway subnet for VPN connection"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "metadata": {
+                "description": "Tags to apply to resources"
+              }
+            },
+            "deployerPublicIP": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Deployer public IP for RDP access (optional)"
+              }
+            }
+          },
+          "variables": {
+            "addressParts": "[split(parameters('vnetAddressSpace'), '/')]",
+            "addressBase": "[split(variables('addressParts')[0], '.')]",
+            "baseNetwork": "[format('{0}.{1}.{2}', variables('addressBase')[0], variables('addressBase')[1], variables('addressBase')[2])]",
+            "prefixLength": "[int(variables('addressParts')[1])]",
+            "vmSubnetPrefix": "[if(equals(variables('prefixLength'), 26), parameters('vnetAddressSpace'), format('{0}.0/27', variables('baseNetwork')))]",
+            "gatewaySubnetPrefix": "[format('{0}.32/27', variables('baseNetwork'))]",
+            "baseSubnets": [
+              {
+                "name": "VmSubnet",
+                "properties": {
+                  "addressPrefix": "[variables('vmSubnetPrefix')]",
+                  "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+                  }
+                }
+              }
+            ],
+            "gatewaySubnet": "[if(parameters('includeGatewaySubnet'), createArray(createObject('name', 'GatewaySubnet', 'properties', createObject('addressPrefix', variables('gatewaySubnetPrefix')))), createArray())]",
+            "allSubnets": "[concat(variables('baseSubnets'), variables('gatewaySubnet'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/networkSecurityGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "securityRules": "[concat(createArray(createObject('name', 'AllowBGPFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '179', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1100, 'direction', 'Inbound', 'description', 'Allow BGP peering within virtual network only')), createObject('name', 'AllowICMPFromVirtualNetwork', 'properties', createObject('protocol', 'Icmp', 'sourcePortRange', '*', 'destinationPortRange', '*', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1200, 'direction', 'Inbound', 'description', 'Allow ICMP ping within virtual network only')), createObject('name', 'AllowSSHFromVirtualNetwork', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', 'VirtualNetwork', 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1300, 'direction', 'Inbound', 'description', 'Allow SSH within virtual network only'))), if(not(equals(parameters('deployerPublicIP'), '')), createArray(createObject('name', 'AllowSSHFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '22', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1000, 'direction', 'Inbound', 'description', 'Allow SSH from deployer IP')), createObject('name', 'AllowRDPFromDeployer', 'properties', createObject('protocol', 'Tcp', 'sourcePortRange', '*', 'destinationPortRange', '3389', 'sourceAddressPrefix', format('{0}/32', parameters('deployerPublicIP')), 'destinationAddressPrefix', '*', 'access', 'Allow', 'priority', 1001, 'direction', 'Inbound', 'description', 'Allow RDP from deployer IP'))), createArray()))]"
+              }
+            },
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2024-05-01",
+              "name": "[parameters('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressSpace')]"
+                  ]
+                },
+                "subnets": "[variables('allSubnets')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+            },
+            "vnetName": {
+              "type": "string",
+              "value": "[parameters('vnetName')]"
+            },
+            "vmSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[0].id]"
+            },
+            "gatewaySubnetId": {
+              "type": "string",
+              "value": "[if(parameters('includeGatewaySubnet'), reference(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '2024-05-01').subnets[1].id, '')]"
+            },
+            "nsgId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/networkSecurityGroups', format('{0}-{1}-nsg', parameters('environmentPrefix'), parameters('vnetName')))]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vwanId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualWans', parameters('vwanName'))]"
+    },
+    "westUsHubId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName'))]"
+    },
+    "centralUsHubId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName'))]"
+    },
+    "southeastAsiaHubId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName'))]"
+    },
+    "spoke1VnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'spoke1-vnet-deployment'), '2022-09-01').outputs.vnetId.value]"
+    },
+    "spoke2VnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'spoke2-vnet-deployment'), '2022-09-01').outputs.vnetId.value]"
+    },
+    "spoke3VnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'spoke3-vnet-deployment'), '2022-09-01').outputs.vnetId.value]"
+    },
+    "spoke4VnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'spoke4-vnet-deployment'), '2022-09-01').outputs.vnetId.value]"
+    },
+    "spoke5VnetId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'spoke5-vnet-deployment'), '2022-09-01').outputs.vnetId.value]"
+    },
+    "westUsHubBgpAddress": {
+      "type": "string",
+      "value": "[if(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterAsn, null())), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps[1]), 'Not Available')]"
+    },
+    "centralUsHubBgpAddress": {
+      "type": "string",
+      "value": "[if(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterAsn, null())), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps[1]), 'Not Available')]"
+    },
+    "southeastAsiaHubBgpAddress": {
+      "type": "string",
+      "value": "[if(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterAsn, null())), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps[1]), 'Not Available')]"
+    }
+  }
+}
