@@ -41,14 +41,12 @@ resource southeastAsiaHub 'Microsoft.Network/virtualHubs@2024-05-01' existing = 
 }
 
 // ============================================================================
-// VWAN Hub Route Tables - Simplified Regional Advertisements
+// VWAN Hub Route Tables - Custom Route Tables for Advanced Routing
 // ============================================================================
+// Note: Default route table modifications are handled via PowerShell deployment script
+// This template creates custom route tables for optional advanced routing policies
 
-// Note: VWAN hubs automatically advertise connected networks
-// Custom route tables are mainly for traffic steering and custom routing policies
-// For basic connectivity, the default VWAN routing is sufficient
-
-// West US Hub Route Table - For custom routing policies
+// West US Hub Custom Route Table
 resource westUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-05-01' = {
   parent: westUsHub
   name: 'westUsRegionalRoutes'
@@ -57,13 +55,13 @@ resource westUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-
       'westus-regional'
     ]
     routes: [
-      // VWAN handles automatic routing for connected networks
-      // Custom routes would go here for specific traffic steering needs
+      // Custom routing policies would go here
+      // Default route table regional summary (10.0.0.0/12) added via PowerShell
     ]
   }
 }
 
-// Central US Hub Route Table - For VPN and custom routing
+// Central US Hub Custom Route Table
 resource centralUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-05-01' = {
   parent: centralUsHub
   name: 'centralUsRegionalRoutes'
@@ -72,13 +70,13 @@ resource centralUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@20
       'centralus-regional'
     ]
     routes: [
-      // VPN Gateway automatically handles BGP advertisements
-      // Custom routes would go here for specific traffic steering needs
+      // Custom routing policies would go here
+      // VPN Gateway handles BGP advertisements automatically
     ]
   }
 }
 
-// Southeast Asia Hub Route Table - For regional routing
+// Southeast Asia Hub Custom Route Table
 resource southeastAsiaHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-05-01' = {
   parent: southeastAsiaHub
   name: 'southeastAsiaRegionalRoutes'
@@ -87,8 +85,8 @@ resource southeastAsiaHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTable
       'southeastasia-regional'
     ]
     routes: [
+      // Custom routing policies would go here
       // VWAN handles automatic routing for connected networks
-      // Custom routes would go here for specific traffic steering needs
     ]
   }
 }

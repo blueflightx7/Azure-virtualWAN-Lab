@@ -604,6 +604,44 @@ function Deploy-MultiRegionPhase {
         }
             
         Write-Host "✅ Phase $PhaseNumber deployed successfully" -ForegroundColor Green
+        
+        # Post-deployment configuration for Phase 6
+        if ($PhaseNumber -eq 6) {
+            Write-Host "🔧 Configuring VWAN Hub default route tables..." -ForegroundColor Yellow
+            
+            # Add West US regional summary route to default route table
+            try {
+                Write-Host "  Adding 10.0.0.0/12 route to West US hub default route table..." -ForegroundColor Cyan
+                
+                # Check if route already exists
+                $existingRoutes = az network vhub route-table show --vhub-name "vhub-$($config.EnvironmentPrefix)-wus" --resource-group $ResourceGroupName --name "defaultRouteTable" --query "routes[?name=='WestUsRegionalSummary']" --output json | ConvertFrom-Json
+                
+                if (-not $existingRoutes -or $existingRoutes.Count -eq 0) {
+                    $routeResult = az network vhub route-table route add `
+                        --vhub-name "vhub-$($config.EnvironmentPrefix)-wus" `
+                        --resource-group $ResourceGroupName `
+                        --name "defaultRouteTable" `
+                        --destination-type "CIDR" `
+                        --destinations "10.0.0.0/12" `
+                        --next-hop-type "ResourceId" `
+                        --next-hop "/subscriptions/$((Get-AzContext).Subscription.Id)/resourceGroups/$ResourceGroupName/providers/Microsoft.Network/virtualHubs/vhub-$($config.EnvironmentPrefix)-wus/hubVirtualNetworkConnections/vnet-spoke1-$($config.EnvironmentPrefix)-wus-connection" `
+                        --route-name "WestUsRegionalSummary" `
+                        2>&1
+                    
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-Host "  ✅ Regional summary route added successfully" -ForegroundColor Green
+                    } else {
+                        Write-Warning "  ⚠️ Failed to add regional summary route: $routeResult"
+                    }
+                } else {
+                    Write-Host "  ✅ Regional summary route already exists" -ForegroundColor Green
+                }
+            }
+            catch {
+                Write-Warning "  ⚠️ Error configuring route tables: $($_.Exception.Message)"
+            }
+        }
+        
         return @{ Success = $true; Outputs = $deployment.Outputs }
     }
     catch {

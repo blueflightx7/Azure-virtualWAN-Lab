@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "17108212584808004834"
+      "templateHash": "2832448975874575468"
     }
   },
   "parameters": {
@@ -64,17 +64,7 @@
         "labels": [
           "westus-regional"
         ],
-        "routes": [
-          {
-            "name": "WestUsRegionalSummary",
-            "destinationType": "CIDR",
-            "destinations": [
-              "10.0.0.0/12"
-            ],
-            "nextHopType": "ResourceId",
-            "nextHop": "[format('{0}/hubVirtualNetworkConnections/vnet-spoke1-{1}-wus-connection', resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), parameters('environmentPrefix'))]"
-          }
-        ]
+        "routes": []
       }
     },
     {
@@ -85,17 +75,7 @@
         "labels": [
           "centralus-regional"
         ],
-        "routes": [
-          {
-            "name": "CentralUsRegionalSummary",
-            "destinationType": "CIDR",
-            "destinations": [
-              "10.16.0.0/12"
-            ],
-            "nextHopType": "ResourceId",
-            "nextHop": "[format('{0}/vpnGateways/vpngw-{1}-cus', resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), parameters('environmentPrefix'))]"
-          }
-        ]
+        "routes": []
       }
     },
     {
@@ -106,17 +86,7 @@
         "labels": [
           "southeastasia-regional"
         ],
-        "routes": [
-          {
-            "name": "SoutheastAsiaRegionalSummary",
-            "destinationType": "CIDR",
-            "destinations": [
-              "10.32.0.0/12"
-            ],
-            "nextHopType": "ResourceId",
-            "nextHop": "[format('{0}/hubVirtualNetworkConnections/vnet-spoke2-{1}-sea-connection', resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), parameters('environmentPrefix'))]"
-          }
-        ]
+        "routes": []
       }
     },
     {
