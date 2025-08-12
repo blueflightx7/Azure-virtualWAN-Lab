@@ -265,6 +265,72 @@ function Test-Prerequisites {
     }
 }
 
+function Wait-ForVwanHubsReady {
+    param(
+        [string]$ResourceGroupName,
+        [string]$EnvironmentPrefix = 'vwanlab',
+        [int]$TimeoutMinutes = 30
+    )
+    
+    Write-Host "🔍 Checking VWAN hub readiness before dependent resource deployment..." -ForegroundColor Yellow
+    
+    $hubNames = @(
+        "vhub-$EnvironmentPrefix-wus",
+        "vhub-$EnvironmentPrefix-cus", 
+        "vhub-$EnvironmentPrefix-sea"
+    )
+    
+    $startTime = Get-Date
+    $timeout = $startTime.AddMinutes($TimeoutMinutes)
+    
+    do {
+        $allHubsReady = $true
+        $hubStatus = @()
+        
+        foreach ($hubName in $hubNames) {
+            try {
+                $hub = Get-AzVirtualHub -ResourceGroupName $ResourceGroupName -Name $hubName -ErrorAction SilentlyContinue
+                if ($hub) {
+                    $status = $hub.ProvisioningState
+                    $hubStatus += "$hubName`: $status"
+                    
+                    if ($status -ne 'Succeeded') {
+                        $allHubsReady = $false
+                    }
+                } else {
+                    $hubStatus += "$hubName`: Not Found"
+                    $allHubsReady = $false
+                }
+            }
+            catch {
+                $hubStatus += "$hubName`: Error - $($_.Exception.Message)"
+                $allHubsReady = $false
+            }
+        }
+        
+        # Display current status
+        Write-Host "  Hub Status: $($hubStatus -join ' | ')" -ForegroundColor Cyan
+        
+        if ($allHubsReady) {
+            Write-Host "✅ All VWAN hubs are ready (Succeeded state)" -ForegroundColor Green
+            return $true
+        }
+        
+        if ((Get-Date) -gt $timeout) {
+            Write-Warning "Timeout waiting for VWAN hubs to be ready after $TimeoutMinutes minutes"
+            Write-Host "Current status:" -ForegroundColor Yellow
+            foreach ($status in $hubStatus) {
+                Write-Host "  $status" -ForegroundColor Yellow
+            }
+            return $false
+        }
+        
+        Write-Host "  ⏳ Waiting for hubs to be ready... (timeout in $([math]::Round(($timeout - (Get-Date)).TotalMinutes, 1)) minutes)" -ForegroundColor Yellow
+        Start-Sleep -Seconds 30
+        
+    } while ($true)
+}
+
 function Connect-AzureAccount {
     param([string]$SubscriptionId)
     
@@ -421,6 +487,7 @@ function Deploy-MultiRegionPhase {
         [hashtable]$Parameters,
         [string]$DeployerPublicIp,
         [hashtable]$Credentials,
+        [string]$ResourceGroupName,
         [string]$FirewallPrivateIp = $null
     )
     
@@ -436,8 +503,17 @@ function Deploy-MultiRegionPhase {
         Write-Warning "Template file not found for Phase $PhaseNumber"
         return @{ Success = $false; Error = "Template not found" }
     }
-    
+
     $templateFile = $templateFiles[0].FullName
+    
+    # Check hub readiness for phases that depend on VWAN hubs
+    if ($PhaseNumber -in @(4, 5, 6)) {
+        Write-Host "🔍 Phase $PhaseNumber requires VWAN hubs to be ready..." -ForegroundColor Yellow
+        if (-not (Wait-ForVwanHubsReady -ResourceGroupName $ResourceGroupName -EnvironmentPrefix $config.EnvironmentPrefix)) {
+            Write-Error "VWAN hubs are not ready. Cannot proceed with Phase $PhaseNumber"
+            return @{ Success = $false; Error = "VWAN hubs not ready" }
+        }
+    }
     
     # Build phase-specific parameters
     $phaseParameters = @{
@@ -713,7 +789,7 @@ try {
         }
         
         if ($Architecture -eq 'MultiRegion') {
-            $result = Deploy-MultiRegionPhase -PhaseNumber $phaseNum -Parameters @{} -DeployerPublicIp $deployerPublicIp -Credentials $credentials -FirewallPrivateIp $firewallPrivateIp
+            $result = Deploy-MultiRegionPhase -PhaseNumber $phaseNum -Parameters @{} -DeployerPublicIp $deployerPublicIp -Credentials $credentials -ResourceGroupName $ResourceGroupName -FirewallPrivateIp $firewallPrivateIp
             
             # Capture firewall private IP from Phase 3
             if ($phaseNum -eq 3 -and $result.Success -and $result.Outputs -and $result.Outputs.firewallPrivateIp) {

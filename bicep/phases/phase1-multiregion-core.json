@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "17835848959890098756"
+      "templateHash": "1541101053686839962"
     }
   },
   "parameters": {
@@ -1149,15 +1149,15 @@
     },
     "westUsHubBgpAddress": {
       "type": "string",
-      "value": "[if(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterAsn, null())), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps[1]), 'Not Available')]"
+      "value": "[if(and(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterAsn, null())), greaterOrEquals(length(reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps), 2)), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), '2023-05-01').virtualRouterIps[1]), 'Provisioning - BGP addresses will be available after hub deployment')]"
     },
     "centralUsHubBgpAddress": {
       "type": "string",
-      "value": "[if(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterAsn, null())), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps[1]), 'Not Available')]"
+      "value": "[if(and(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterAsn, null())), greaterOrEquals(length(reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps), 2)), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualRouterIps[1]), 'Provisioning - BGP addresses will be available after hub deployment')]"
     },
     "southeastAsiaHubBgpAddress": {
       "type": "string",
-      "value": "[if(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterAsn, null())), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps[1]), 'Not Available')]"
+      "value": "[if(and(not(equals(reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterAsn, null())), greaterOrEquals(length(reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps), 2)), format('{0}, {1}', reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps[0], reference(resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), '2023-05-01').virtualRouterIps[1]), 'Provisioning - BGP addresses will be available after hub deployment')]"
     }
   }
 }

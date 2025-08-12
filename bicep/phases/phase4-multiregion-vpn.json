@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "4231367157604638297"
+      "templateHash": "5348288782256798655"
     }
   },
   "parameters": {
@@ -39,9 +39,9 @@
     },
     "spoke3AddressSpace": {
       "type": "string",
-      "defaultValue": "10.48.1.0/25",
+      "defaultValue": "10.16.1.0/25",
       "metadata": {
-        "description": "Spoke 3 address space for local network gateway"
+        "description": "Spoke 3 address space for local network gateway - corrected to Central US allocation"
       }
     },
     "tags": {

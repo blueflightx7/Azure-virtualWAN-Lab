@@ -217,7 +217,7 @@ output spoke3VnetId string = spoke3Vnet.outputs.vnetId
 output spoke4VnetId string = spoke4Vnet.outputs.vnetId
 output spoke5VnetId string = spoke5Vnet.outputs.vnetId
 
-// Hub BGP Information (for reference)
-output westUsHubBgpAddress string = westUsHub.properties.virtualRouterAsn != null ? '${westUsHub.properties.virtualRouterIps[0]}, ${westUsHub.properties.virtualRouterIps[1]}' : 'Not Available'
-output centralUsHubBgpAddress string = centralUsHub.properties.virtualRouterAsn != null ? '${centralUsHub.properties.virtualRouterIps[0]}, ${centralUsHub.properties.virtualRouterIps[1]}' : 'Not Available'
-output southeastAsiaHubBgpAddress string = southeastAsiaHub.properties.virtualRouterAsn != null ? '${southeastAsiaHub.properties.virtualRouterIps[0]}, ${southeastAsiaHub.properties.virtualRouterIps[1]}' : 'Not Available'
+// Hub BGP Information (available after hub provisioning)
+output westUsHubBgpAddress string = (westUsHub.properties.virtualRouterAsn != null && length(westUsHub.properties.virtualRouterIps) >= 2) ? '${westUsHub.properties.virtualRouterIps[0]}, ${westUsHub.properties.virtualRouterIps[1]}' : 'Provisioning - BGP addresses will be available after hub deployment'
+output centralUsHubBgpAddress string = (centralUsHub.properties.virtualRouterAsn != null && length(centralUsHub.properties.virtualRouterIps) >= 2) ? '${centralUsHub.properties.virtualRouterIps[0]}, ${centralUsHub.properties.virtualRouterIps[1]}' : 'Provisioning - BGP addresses will be available after hub deployment'
+output southeastAsiaHubBgpAddress string = (southeastAsiaHub.properties.virtualRouterAsn != null && length(southeastAsiaHub.properties.virtualRouterIps) >= 2) ? '${southeastAsiaHub.properties.virtualRouterIps[0]}, ${southeastAsiaHub.properties.virtualRouterIps[1]}' : 'Provisioning - BGP addresses will be available after hub deployment'

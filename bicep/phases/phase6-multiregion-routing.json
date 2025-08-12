@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "15111980142797862071"
+      "templateHash": "16131627242972474386"
     }
   },
   "parameters": {
@@ -14,6 +14,27 @@
       "defaultValue": "vwanlab",
       "metadata": {
         "description": "Environment prefix for resource naming"
+      }
+    },
+    "westUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "West US VWAN Hub name"
+      }
+    },
+    "centralUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Central US VWAN Hub name"
+      }
+    },
+    "southeastAsiaHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-sea', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Southeast Asia VWAN Hub name"
       }
     },
     "spoke4VnetName": {
@@ -49,6 +70,69 @@
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('westUsHubName'), 'westUsRegionalRoutes')]",
+      "properties": {
+        "labels": [
+          "westus-regional"
+        ],
+        "routes": [
+          {
+            "name": "WestUsRegionalSummary",
+            "destinationType": "CIDR",
+            "destinations": [
+              "10.0.0.0/12"
+            ],
+            "nextHopType": "IPAddress",
+            "nextHop": "10.0.1.4"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('centralUsHubName'), 'centralUsRegionalRoutes')]",
+      "properties": {
+        "labels": [
+          "centralus-regional"
+        ],
+        "routes": [
+          {
+            "name": "CentralUsRegionalSummary",
+            "destinationType": "CIDR",
+            "destinations": [
+              "10.16.0.0/12"
+            ],
+            "nextHopType": "IPAddress",
+            "nextHop": "10.16.1.4"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('southeastAsiaHubName'), 'southeastAsiaRegionalRoutes')]",
+      "properties": {
+        "labels": [
+          "southeastasia-regional"
+        ],
+        "routes": [
+          {
+            "name": "SoutheastAsiaRegionalSummary",
+            "destinationType": "CIDR",
+            "destinations": [
+              "10.32.0.0/12"
+            ],
+            "nextHopType": "IPAddress",
+            "nextHop": "10.32.1.4"
+          }
+        ]
+      }
+    },
     {
       "type": "Microsoft.Network/routeTables",
       "apiVersion": "2024-05-01",
@@ -158,6 +242,18 @@
     "spoke5RouteTableId": {
       "type": "string",
       "value": "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke5-rt', parameters('environmentPrefix')))]"
+    },
+    "westUsHubRouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', parameters('westUsHubName'), 'westUsRegionalRoutes')]"
+    },
+    "centralUsHubRouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', parameters('centralUsHubName'), 'centralUsRegionalRoutes')]"
+    },
+    "southeastAsiaHubRouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', parameters('southeastAsiaHubName'), 'southeastAsiaRegionalRoutes')]"
     }
   }
 }

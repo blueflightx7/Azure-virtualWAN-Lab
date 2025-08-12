@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "9229146362758010565"
+      "templateHash": "9329208560409316865"
     }
   },
   "parameters": {
@@ -153,7 +153,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "16241560488346101564"
+              "templateHash": "4099316694526526381"
             }
           },
           "parameters": {
@@ -312,7 +312,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
+                  "commandToExecute": "apt-get update && apt-get install -y iproute2 iputils-ping curl wget dnsutils && echo \"Networking tools installed successfully\""
                 }
               },
               "dependsOn": [
@@ -383,7 +383,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "26002384468961297"
+              "templateHash": "8382469307095061253"
             }
           },
           "parameters": {
@@ -491,7 +491,7 @@
                   "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
-                  "computerName": "[parameters('vmName')]",
+                  "computerName": "[take(replace(parameters('vmName'), '-', ''), 15)]",
                   "adminUsername": "[parameters('adminUsername')]",
                   "adminPassword": "[parameters('adminPassword')]",
                   "windowsConfiguration": {
@@ -613,7 +613,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "16241560488346101564"
+              "templateHash": "4099316694526526381"
             }
           },
           "parameters": {
@@ -772,7 +772,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
+                  "commandToExecute": "apt-get update && apt-get install -y iproute2 iputils-ping curl wget dnsutils && echo \"Networking tools installed successfully\""
                 }
               },
               "dependsOn": [
@@ -1084,7 +1084,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "16241560488346101564"
+              "templateHash": "4099316694526526381"
             }
           },
           "parameters": {
@@ -1243,7 +1243,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
+                  "commandToExecute": "apt-get update && apt-get install -y iproute2 iputils-ping curl wget dnsutils && echo \"Networking tools installed successfully\""
                 }
               },
               "dependsOn": [
@@ -1314,7 +1314,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "16241560488346101564"
+              "templateHash": "4099316694526526381"
             }
           },
           "parameters": {
@@ -1473,7 +1473,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
+                  "commandToExecute": "apt-get update && apt-get install -y iproute2 iputils-ping curl wget dnsutils && echo \"Networking tools installed successfully\""
                 }
               },
               "dependsOn": [
