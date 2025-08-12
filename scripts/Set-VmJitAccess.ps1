@@ -1,65 +1,49 @@
-#Requires -Modules Az.Accounts, Az.Compute, Az.Resources, Az.Network
+#Requires -Version 5.1
+#Requires -Modules Az.Accounts, Az.Compute, Az.Network, Az.Security
 
 <#
 .SYNOPSIS
-    Configure Just-In-Time (JIT) VM access for Azure VMs in VWAN Lab
-
+    Configure Just-In-Time (JIT) VM access for Azure VWAN Lab VMs
+    
 .DESCRIPTION
-    This script configures Microsoft Defender for Cloud Just-In-Time (JIT) VM access for all VMs in the specified resource group.
-    JIT access is part of Microsoft's Secure Future Initiative (SFI) and helps reduce the attack surface by automatically
-    closing RDP ports and requiring approval for access.
-
+    This script configures JIT access for all VMs in a resource group.
+    Uses REST API since Azure CLI doesn't support JIT policy create/delete operations.
+    Falls back to restrictive NSG rules if JIT configuration fails.
+    
 .PARAMETER ResourceGroupName
     Name of the resource group containing the VMs
-
+    
 .PARAMETER Force
-    Skip confirmation prompts
-
+    Skip confirmation prompt
+    
 .EXAMPLE
-    .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo"
-    Configure JIT access for all VMs in the resource group
-
+    .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-security"
+    
 .EXAMPLE
     .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-security" -Force
-    Configure JIT access without confirmation prompts
-
-.NOTES
-    Author: Azure VWAN Lab Team
-    Version: 1.0
-    Requires: Azure PowerShell, Microsoft Defender for Cloud, appropriate Azure permissions
-    
-    This script is part of the Secure Future Initiative (SFI) implementation for the Azure VWAN Lab.
-    If Defender for Cloud is not available, it will fall back to restrictive NSG rules.
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
 param(
     [Parameter(Mandatory = $true)]
     [string]$ResourceGroupName,
     
-    [Parameter(Mandatory = $false)]
     [switch]$Force
 )
 
-# Script configuration
-$ErrorActionPreference = "Stop"
-
 function Write-Header {
-    param($Title, $Subtitle)
+    param([string]$Title, [string]$Subtitle = "")
     
-    Write-Host "`n" -NoNewline
-    Write-Host "=" * 60 -ForegroundColor DarkCyan
-    Write-Host " $Title" -ForegroundColor Cyan
+    $line = "=" * 60
+    Write-Host "`n$line" -ForegroundColor Cyan
+    Write-Host " $Title" -ForegroundColor White
     if ($Subtitle) {
         Write-Host " $Subtitle" -ForegroundColor Gray
     }
-    Write-Host "=" * 60 -ForegroundColor DarkCyan
+    Write-Host "$line" -ForegroundColor Cyan
 }
 
 function Get-ActualJitVmCount {
-    param(
-        [string]$ResourceGroupName
-    )
+    param([string]$ResourceGroupName)
     
     try {
         # Get all unique locations with VMs
@@ -71,8 +55,11 @@ function Get-ActualJitVmCount {
                 $jitPolicyResult = az security jit-policy show --resource-group $ResourceGroupName --location $location --name "default" --query "virtualMachines[].id" --output json 2>$null
                 if ($LASTEXITCODE -eq 0 -and $jitPolicyResult) {
                     $vmIds = $jitPolicyResult | ConvertFrom-Json
-                    $totalJitVms += $vmIds.Count
-                    Write-Host "  📍 $location`: $($vmIds.Count) VMs in JIT policy" -ForegroundColor Gray
+                    if ($vmIds) {
+                        $vmCount = if ($vmIds -is [array]) { $vmIds.Count } else { 1 }
+                        $totalJitVms += $vmCount
+                        Write-Host "  📍 $location`: $vmCount VMs in JIT policy" -ForegroundColor Gray
+                    }
                 }
             } catch {
                 # No JIT policy for this location
@@ -83,196 +70,6 @@ function Get-ActualJitVmCount {
     } catch {
         Write-Warning "Failed to verify JIT configuration: $($_.Exception.Message)"
         return 0
-    }
-}
-
-function Enable-JitAccessForLab {
-    param(
-        [string]$ResourceGroupName
-    )
-    
-    Write-Host '🔐 Configuring Just-In-Time (JIT) VM access...' -ForegroundColor Yellow
-    Write-Host "   Secure Future Initiative (SFI) security enhancement" -ForegroundColor Gray
-    
-    # Get all VMs in the resource group
-    $vms = Get-AzVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
-    
-    if (-not $vms) {
-        Write-Warning "No VMs found in resource group $ResourceGroupName"
-        return 0
-    }
-    
-    $totalCount = $vms.Count
-    Write-Host "`n🔍 Found $totalCount VMs in resource group: $ResourceGroupName" -ForegroundColor Cyan
-    
-    # Group VMs by location for regional JIT policies
-    $vmsByLocation = $vms | Group-Object Location
-    
-    $policiesCreated = 0
-    
-    foreach ($locationGroup in $vmsByLocation) {
-        $location = $locationGroup.Name
-        $locationVms = $locationGroup.Group
-        
-        Write-Host "`n📍 Configuring JIT for $($locationVms.Count) VMs in $location" -ForegroundColor Yellow
-        
-        try {
-            # Check if JIT policy already exists for this location
-            $existingPolicy = az security jit-policy show --resource-group $ResourceGroupName --location $location --name "default" 2>$null
-            if ($existingPolicy) {
-                Write-Host "  �️ Removing existing JIT policy for $location..." -ForegroundColor Gray
-                az security jit-policy delete --resource-group $ResourceGroupName --location $location --name "default" --yes 2>$null
-            }
-            
-            # Create JIT policy for all VMs in this location
-            $virtualMachines = @()
-            foreach ($vm in $locationVms) {
-                $virtualMachines += @{
-                    id = $vm.Id
-                    ports = @(
-                        @{
-                            number = 3389
-                            protocol = "TCP"
-                            allowedSourceAddressPrefix = "*"
-                            maxRequestAccessDuration = "PT3H"
-                        }
-                        @{
-                            number = 22
-                            protocol = "TCP"
-                            allowedSourceAddressPrefix = "*"
-                            maxRequestAccessDuration = "PT3H"
-                        }
-                    )
-                }
-            }
-            
-            $jitPolicy = @{
-                kind = "Basic"
-                properties = @{
-                    virtualMachines = $virtualMachines
-                }
-            }
-            
-            $policyJson = $jitPolicy | ConvertTo-Json -Depth 10 -Compress
-            $tempFile = [System.IO.Path]::GetTempFileName()
-            $policyJson | Out-File -FilePath $tempFile -Encoding UTF8
-            
-            # Create JIT policy using Azure CLI
-            $result = az security jit-policy create --resource-group $ResourceGroupName --location $location --name "default" --policy "@$tempFile" 2>&1
-            Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
-            
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "  ✅ JIT policy created for $($locationVms.Count) VMs in $location" -ForegroundColor Green
-                $policiesCreated++
-            } else {
-                $errorMsg = if ($result) { $result -join "; " } else { "Unknown Azure CLI error (exit code: $LASTEXITCODE)" }
-                Write-Host "  ❌ JIT policy creation failed for $location`: $errorMsg" -ForegroundColor Red
-                
-                # Fallback to NSG configuration for this location
-                Write-Host "  � Falling back to NSG configuration for $location..." -ForegroundColor Yellow
-                foreach ($vm in $locationVms) {
-                    Set-VmRestrictedRdpAccess -ResourceGroupName $ResourceGroupName -VmName $vm.Name | Out-Null
-                }
-            }
-        } catch {
-            Write-Host "  ❌ Error configuring JIT for $location`: $($_.Exception.Message)" -ForegroundColor Red
-            Write-Host "  🔄 Attempting NSG fallback for $location..." -ForegroundColor Yellow
-            
-            # Fallback to NSG configuration for this location
-            foreach ($vm in $locationVms) {
-                Set-VmRestrictedRdpAccess -ResourceGroupName $ResourceGroupName -VmName $vm.Name | Out-Null
-            }
-        }
-    }
-    
-    # Verify actual JIT configuration
-    Write-Host "`n🔍 Verifying JIT policies..." -ForegroundColor Yellow
-    $actualJitCount = Get-ActualJitVmCount -ResourceGroupName $ResourceGroupName
-    
-    return $actualJitCount
-}
-
-function Set-VmJitAccess {
-    param(
-        [string]$ResourceGroupName,
-        [string]$VmName
-    )
-    
-    try {
-        Write-Host "  🔐 Configuring JIT access for $VmName..." -ForegroundColor Gray
-        
-        # Get the VM to get its resource ID and location
-        $vm = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VmName -ErrorAction Stop
-        
-        # Try using REST API through PowerShell (Azure CLI doesn't support JIT policy creation)
-        $vmResourceId = $vm.Id
-        $subscriptionId = (Get-AzContext).Subscription.Id
-        $location = $vm.Location
-        
-        # Create JIT policy using REST API
-        $jitPolicy = @{
-            kind = "Basic"
-            properties = @{
-                virtualMachines = @(
-                    @{
-                        id = $vmResourceId
-                        ports = @(
-                            @{
-                                number = 3389
-                                protocol = "TCP"
-                                allowedSourceAddressPrefix = "*"
-                                maxRequestAccessDuration = "PT3H"
-                            }
-                            @{
-                                number = 22
-                                protocol = "TCP"
-                                allowedSourceAddressPrefix = "*"
-                                maxRequestAccessDuration = "PT3H"
-                            }
-                        )
-                    }
-                )
-            }
-        }
-        
-        # Get access token for REST API (using newer method)
-        try {
-            $tokenResult = Get-AzAccessToken -ResourceUrl "https://management.azure.com/"
-            $token = $tokenResult.Token
-        } catch {
-            # Fallback to older method if available
-            $context = Get-AzContext
-            $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "https://management.azure.com/").AccessToken
-        }
-        
-        # Create REST API request
-        $uri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$location/jitNetworkAccessPolicies/default?api-version=2020-01-01"
-        $headers = @{
-            'Authorization' = "Bearer $token"
-            'Content-Type' = 'application/json'
-        }
-        
-        $body = $jitPolicy | ConvertTo-Json -Depth 10
-        
-        try {
-            $response = Invoke-RestMethod -Uri $uri -Method PUT -Headers $headers -Body $body
-            Write-Host "    ✅ JIT access policy configured successfully" -ForegroundColor Green
-            return $true
-        } catch {
-            $errorDetails = $_.Exception.Message
-            if ($_.Exception.Response) {
-                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                $errorDetails += " Response: " + $reader.ReadToEnd()
-            }
-            throw "REST API JIT configuration failed: $errorDetails"
-        }
-    }
-    catch {
-        Write-Warning "    ❌ Failed to configure JIT for ${VmName}: $($_.Exception.Message)"
-        
-        # Fallback to restricted NSG rules
-        Write-Host "    🔄 Falling back to restricted NSG configuration..." -ForegroundColor Yellow
-        return Set-VmRestrictedRdpAccess -ResourceGroupName $ResourceGroupName -VmName $VmName
     }
 }
 
@@ -315,7 +112,14 @@ function Set-VmRestrictedRdpAccess {
             $existingRule = $nsg.SecurityRules | Where-Object { $_.Name -eq $ruleName }
             
             if (-not $existingRule) {
-                $nsg | Add-AzNetworkSecurityRuleConfig -Name $ruleName -Description "SFI: Deny RDP from Internet (JIT override available)" -Access Deny -Protocol Tcp -Direction Inbound -Priority 1001 -SourceAddressPrefix "Internet" -SourcePortRange "*" -DestinationAddressPrefix "*" -DestinationPortRange "3389"
+                # Find a unique priority (avoid conflicts)
+                $usedPriorities = $nsg.SecurityRules | Where-Object { $_.Direction -eq "Inbound" } | ForEach-Object { $_.Priority }
+                $priority = 1001
+                while ($priority -in $usedPriorities) {
+                    $priority++
+                }
+                
+                $nsg | Add-AzNetworkSecurityRuleConfig -Name $ruleName -Description "SFI: Deny RDP from Internet (JIT override available)" -Access Deny -Protocol Tcp -Direction Inbound -Priority $priority -SourceAddressPrefix "Internet" -SourcePortRange "*" -DestinationAddressPrefix "*" -DestinationPortRange "3389"
                 $nsg | Set-AzNetworkSecurityGroup | Out-Null
             }
             
@@ -330,6 +134,123 @@ function Set-VmRestrictedRdpAccess {
         Write-Warning "    ❌ Failed to configure restricted access for ${VmName}: $($_.Exception.Message)"
         return $false
     }
+}
+
+function Enable-JitAccessForLab {
+    param([string]$ResourceGroupName)
+    
+    Write-Host '🔐 Configuring Just-In-Time (JIT) VM access...' -ForegroundColor Yellow
+    Write-Host "   Secure Future Initiative (SFI) security enhancement" -ForegroundColor Gray
+    
+    # Get all VMs in the resource group
+    $vms = Get-AzVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    
+    if (-not $vms) {
+        Write-Warning "No VMs found in resource group $ResourceGroupName"
+        return 0
+    }
+    
+    $totalCount = $vms.Count
+    Write-Host "`n🔍 Found $totalCount VMs in resource group: $ResourceGroupName" -ForegroundColor Cyan
+    
+    # Group VMs by location for regional JIT policies
+    $vmsByLocation = $vms | Group-Object Location
+    
+    $policiesCreated = 0
+    
+    foreach ($locationGroup in $vmsByLocation) {
+        $location = $locationGroup.Name
+        $locationVms = $locationGroup.Group
+        
+        Write-Host "`n📍 Configuring JIT for $($locationVms.Count) VMs in $location" -ForegroundColor Yellow
+        
+        try {
+            # Get access token for REST API
+            try {
+                $tokenResult = Get-AzAccessToken -ResourceUrl "https://management.azure.com/"
+                $token = $tokenResult.Token
+            } catch {
+                throw "Failed to get Azure access token: $($_.Exception.Message)"
+            }
+            
+            # Create JIT policy for all VMs in this location using REST API
+            $virtualMachines = @()
+            foreach ($vm in $locationVms) {
+                $virtualMachines += @{
+                    id = $vm.Id
+                    ports = @(
+                        @{
+                            number = 3389
+                            protocol = "TCP"
+                            allowedSourceAddressPrefix = "*"
+                            maxRequestAccessDuration = "PT3H"
+                        }
+                        @{
+                            number = 22
+                            protocol = "TCP"
+                            allowedSourceAddressPrefix = "*"
+                            maxRequestAccessDuration = "PT3H"
+                        }
+                    )
+                }
+            }
+            
+            $jitPolicy = @{
+                kind = "Basic"
+                properties = @{
+                    virtualMachines = $virtualMachines
+                }
+            }
+            
+            # Create REST API request
+            $subscriptionId = (Get-AzContext).Subscription.Id
+            $uri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$location/jitNetworkAccessPolicies/default?api-version=2020-01-01"
+            $headers = @{
+                'Authorization' = "Bearer $token"
+                'Content-Type' = 'application/json'
+            }
+            
+            $body = $jitPolicy | ConvertTo-Json -Depth 10
+            
+            try {
+                $response = Invoke-RestMethod -Uri $uri -Method PUT -Headers $headers -Body $body
+                Write-Host "  ✅ JIT policy created for $($locationVms.Count) VMs in $location" -ForegroundColor Green
+                $policiesCreated++
+            } catch {
+                $errorDetails = $_.Exception.Message
+                if ($_.Exception.Response) {
+                    try {
+                        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                        $errorDetails += " Response: " + $reader.ReadToEnd()
+                        $reader.Close()
+                    } catch {
+                        # Ignore errors reading response
+                    }
+                }
+                Write-Host "  ❌ REST API JIT configuration failed for $location`: $errorDetails" -ForegroundColor Red
+                
+                # Fallback to NSG configuration for this location
+                Write-Host "  🔄 Falling back to NSG configuration for $location..." -ForegroundColor Yellow
+                foreach ($vm in $locationVms) {
+                    Set-VmRestrictedRdpAccess -ResourceGroupName $ResourceGroupName -VmName $vm.Name | Out-Null
+                }
+            }
+        } catch {
+            Write-Host "  ❌ Error configuring JIT for $location`: $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "  🔄 Attempting NSG fallback for $location..." -ForegroundColor Yellow
+            
+            # Fallback to NSG configuration for this location
+            foreach ($vm in $locationVms) {
+                Set-VmRestrictedRdpAccess -ResourceGroupName $ResourceGroupName -VmName $vm.Name | Out-Null
+            }
+        }
+    }
+    
+    # Verify actual JIT configuration
+    Write-Host "`n🔍 Verifying JIT policies..." -ForegroundColor Yellow
+    $actualJitCount = Get-ActualJitVmCount -ResourceGroupName $ResourceGroupName
+    
+    return $actualJitCount
 }
 
 # Main execution
