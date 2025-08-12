@@ -101,12 +101,17 @@ function Enable-JitAccessForLab {
         }
     }
     
-    Write-Host "`n✅ JIT/Restricted access configured: $successCount/$totalCount VMs" -ForegroundColor Green
+    Write-Host "`n✅ JIT/Restricted access configured: $successCount/$totalCount VMs" -ForegroundColor $(if ($successCount -eq $totalCount) { 'Green' } elseif ($successCount -gt 0) { 'Yellow' } else { 'Red' })
     
     if ($successCount -gt 0) {
-        Write-Host "🔒 Enhanced Security: VMs protected with Just-In-Time access" -ForegroundColor Cyan
+        Write-Host "🔒 Enhanced Security: $successCount VMs protected with Just-In-Time access" -ForegroundColor Cyan
         Write-Host "🛡️ Access Control: RDP access requires approval through Azure Portal" -ForegroundColor Cyan
         Write-Host "⏱️ Time-Limited: Access automatically expires after specified duration" -ForegroundColor Gray
+    }
+    
+    if ($successCount -lt $totalCount) {
+        Write-Host "⚠️ Warning: $($totalCount - $successCount) VMs failed to configure JIT/restricted access" -ForegroundColor Red
+        Write-Host "💡 Manual configuration may be required for failed VMs" -ForegroundColor Yellow
     }
     
     return $successCount
@@ -124,43 +129,52 @@ function Set-VmJitAccess {
         # Get the VM to get its resource ID and location
         $vm = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VmName -ErrorAction Stop
         
-        # JIT Policy configuration
-        $jitPolicy = @{
-            id = $vm.Id
-            ports = @(
-                @{
-                    number = 3389
-                    protocol = "TCP"
-                    allowedSourceAddressPrefix = "*"
-                    maxRequestAccessDuration = "PT3H"  # 3 hours
-                }
-            )
-        }
+        # Try using Azure CLI for JIT configuration (more reliable than REST API)
+        $vmResourceId = $vm.Id
         
-        # Create JIT access policy using REST API
-        $subscriptionId = (Get-AzContext).Subscription.Id
-        $policyName = "default"
-        $resourceUri = "/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$($vm.Location)/jitNetworkAccessPolicies/$policyName"
-        
-        $jitPolicyRequest = @{
-            properties = @{
-                virtualMachines = @($jitPolicy)
+        # Create properly formatted JSON for the JIT policy
+        $jitPolicyJson = @"
+{
+    "kind": "Basic",
+    "properties": {
+        "virtualMachines": [
+            {
+                "id": "$vmResourceId",
+                "ports": [
+                    {
+                        "number": 3389,
+                        "protocol": "TCP",
+                        "allowedSourceAddressPrefix": "*",
+                        "maxRequestAccessDuration": "PT3H"
+                    },
+                    {
+                        "number": 22,
+                        "protocol": "TCP", 
+                        "allowedSourceAddressPrefix": "*",
+                        "maxRequestAccessDuration": "PT3H"
+                    }
+                ]
             }
+        ]
+    }
+}
+"@
+        
+        # Write to temp file for Azure CLI
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        $jitPolicyJson | Out-File -FilePath $tempFile -Encoding UTF8
+        
+        # Create JIT policy using Azure CLI
+        $jitResult = az security jit-policy create --location $vm.Location --name "jit-policy-$VmName" --resource-group $ResourceGroupName --policy "@$tempFile" 2>&1
+        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "    ✅ JIT access policy configured successfully" -ForegroundColor Green
+            return $true
+        } else {
+            $errorMsg = if ($jitResult) { $jitResult -join "; " } else { "Unknown Azure CLI error (exit code: $LASTEXITCODE)" }
+            throw "Azure CLI JIT configuration failed: $errorMsg"
         }
-        
-        # Use Azure REST API to create JIT policy
-        $headers = @{
-            'Authorization' = "Bearer $((Get-AzAccessToken).Token)"
-            'Content-Type' = 'application/json'
-        }
-        
-        $body = $jitPolicyRequest | ConvertTo-Json -Depth 5
-        $uri = "https://management.azure.com$resourceUri" + "?api-version=2020-01-01"
-        
-        $response = Invoke-RestMethod -Uri $uri -Method PUT -Headers $headers -Body $body
-        
-        Write-Host "    ✅ JIT access policy configured successfully" -ForegroundColor Green
-        return $true
     }
     catch {
         Write-Warning "    ❌ Failed to configure JIT for ${VmName}: $($_.Exception.Message)"
@@ -188,13 +202,19 @@ function Set-VmRestrictedRdpAccess {
         # Get the NSG associated with the subnet or NIC
         $nsg = $null
         if ($nic.NetworkSecurityGroup) {
-            $nsg = Get-AzNetworkSecurityGroup -ResourceId $nic.NetworkSecurityGroup.Id
+            $nsgId = $nic.NetworkSecurityGroup.Id
+            $nsgName = ($nsgId -split '/')[-1]
+            $nsgRg = ($nsgId -split '/')[4]
+            $nsg = Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $nsgRg
         } else {
             # Check subnet NSG
             $vnet = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName
             $subnet = $vnet.Subnets | Where-Object { $_.Id -eq $nic.IpConfigurations[0].Subnet.Id }
             if ($subnet.NetworkSecurityGroup) {
-                $nsg = Get-AzNetworkSecurityGroup -ResourceId $subnet.NetworkSecurityGroup.Id
+                $nsgId = $subnet.NetworkSecurityGroup.Id
+                $nsgName = ($nsgId -split '/')[-1]
+                $nsgRg = ($nsgId -split '/')[4]
+                $nsg = Get-AzNetworkSecurityGroup -Name $nsgName -ResourceGroupName $nsgRg
             }
         }
         
@@ -263,10 +283,29 @@ try {
     }
     
     # Configure JIT access
-    $jitConfigured = Enable-JitAccessForLab -ResourceGroupName $ResourceGroupName
+    $result = Enable-JitAccessForLab -ResourceGroupName $ResourceGroupName
+    $jitConfigured = $result
+    
+    # Get VM count for reporting
+    $allVms = Get-AzVM -ResourceGroupName $ResourceGroupName
+    $totalVmCount = $allVms.Count
     
     # Results
-    Write-Host "`n🎉 JIT Configuration completed!" -ForegroundColor Green
+    if ($jitConfigured -eq 0) {
+        Write-Host "`n❌ JIT Configuration failed for all VMs!" -ForegroundColor Red
+        Write-Host "`n🔧 Troubleshooting:" -ForegroundColor Yellow
+        Write-Host "  1. Ensure Microsoft Defender for Cloud is enabled" -ForegroundColor Gray
+        Write-Host "  2. Check Azure permissions (Security Admin role required)" -ForegroundColor Gray
+        Write-Host "  3. Verify VMs are running and accessible" -ForegroundColor Gray
+        Write-Host "  4. Check if JIT policies already exist for these VMs" -ForegroundColor Gray
+        exit 1
+    } elseif ($jitConfigured -lt $totalVmCount) {
+        Write-Host "`n⚠️ JIT Configuration partially completed!" -ForegroundColor Yellow
+        Write-Host "   Configured: $jitConfigured/$totalVmCount VMs" -ForegroundColor Yellow
+    } else {
+        Write-Host "`n🎉 JIT Configuration completed successfully!" -ForegroundColor Green
+        Write-Host "   Configured: $jitConfigured/$totalVmCount VMs" -ForegroundColor Green
+    }
     
     if ($jitConfigured -gt 0) {
         Write-Host "`n📋 Next Steps:" -ForegroundColor Cyan

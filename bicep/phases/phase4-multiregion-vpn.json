@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "8598470390058855218"
+      "templateHash": "9145390204418615675"
     }
   },
   "parameters": {
@@ -39,7 +39,7 @@
     },
     "spoke3AddressSpace": {
       "type": "string",
-      "defaultValue": "10.16.1.0/26",
+      "defaultValue": "10.16.1.0/25",
       "metadata": {
         "description": "Spoke 3 address space for local network gateway"
       }
@@ -96,8 +96,25 @@
         },
         "bgpProperties": {
           "asn": 65001,
+          "bgpPeeringAddress": "10.16.1.4",
           "peerWeight": 0
         },
+        "vpnSiteLinks": [
+          {
+            "name": "link1",
+            "properties": {
+              "ipAddress": "1.1.1.1",
+              "linkProperties": {
+                "linkProviderName": "Microsoft",
+                "linkSpeedInMbps": 100
+              },
+              "bgpProperties": {
+                "asn": 65001,
+                "bgpPeeringAddress": "10.16.1.4"
+              }
+            }
+          }
+        ],
         "ipAddress": "1.1.1.1"
       }
     },

@@ -16,7 +16,7 @@ param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
 param vpnGatewayName string = 'vpngw-${environmentPrefix}-cus'
 
 @description('Spoke 3 address space for local network gateway')
-param spoke3AddressSpace string = '10.16.1.0/26'
+param spoke3AddressSpace string = '10.16.1.0/25'
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -68,8 +68,25 @@ resource vpnSite 'Microsoft.Network/vpnSites@2023-05-01' = {
     }
     bgpProperties: {
       asn: 65001
+      bgpPeeringAddress: '10.16.1.4'
       peerWeight: 0
     }
+    vpnSiteLinks: [
+      {
+        name: 'link1'
+        properties: {
+          ipAddress: '1.1.1.1' // Placeholder - will be updated with actual RRAS VM public IP
+          linkProperties: {
+            linkProviderName: 'Microsoft'
+            linkSpeedInMbps: 100
+          }
+          bgpProperties: {
+            asn: 65001
+            bgpPeeringAddress: '10.16.1.4'
+          }
+        }
+      }
+    ]
     // Note: ipAddress will need to be updated with actual RRAS VM public IP after VM deployment
     ipAddress: '1.1.1.1' // Placeholder - will be updated in deployment script
   }

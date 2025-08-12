@@ -51,7 +51,7 @@ param tags object = {
 module spoke1LinuxVm '../modules/vm-linux.bicep' = {
   name: 'spoke1-linux-vm-deployment'
   params: {
-    vmName: '${environmentPrefix}-spoke1-linux-wus'
+    vmName: 'vm-s1-linux-wus'
     location: westUsRegion
     vmSize: linuxVmSize
     adminUsername: adminUsername
@@ -66,7 +66,7 @@ module spoke1LinuxVm '../modules/vm-linux.bicep' = {
 module spoke1WindowsVm '../modules/vm-windows.bicep' = {
   name: 'spoke1-windows-vm-deployment'
   params: {
-    vmName: '${environmentPrefix}-spoke1-win-wus'
+    vmName: 'vm-s1-win-wus'
     location: westUsRegion
     vmSize: windowsVmSize
     adminUsername: adminUsername
@@ -81,7 +81,7 @@ module spoke1WindowsVm '../modules/vm-windows.bicep' = {
 module spoke2LinuxVm '../modules/vm-linux.bicep' = {
   name: 'spoke2-linux-vm-deployment'
   params: {
-    vmName: '${environmentPrefix}-spoke2-linux-sea'
+    vmName: 'vm-s2-linux-sea'
     location: southeastAsiaRegion
     vmSize: linuxVmSize
     adminUsername: adminUsername
@@ -96,7 +96,7 @@ module spoke2LinuxVm '../modules/vm-linux.bicep' = {
 module spoke3RrasVm '../modules/vm-windows-rras.bicep' = {
   name: 'spoke3-rras-vm-deployment'
   params: {
-    vmName: '${environmentPrefix}-spoke3-rras-cus'
+    vmName: 'vm-s3-rras-cus'
     location: centralUsRegion
     vmSize: windowsVmSize
     adminUsername: adminUsername
@@ -112,7 +112,7 @@ module spoke3RrasVm '../modules/vm-windows-rras.bicep' = {
 module spoke4LinuxVm '../modules/vm-linux.bicep' = {
   name: 'spoke4-linux-vm-deployment'
   params: {
-    vmName: '${environmentPrefix}-spoke4-linux-wus'
+    vmName: 'vm-s4-linux-wus'
     location: westUsRegion
     vmSize: linuxVmSize
     adminUsername: adminUsername
@@ -127,7 +127,7 @@ module spoke4LinuxVm '../modules/vm-linux.bicep' = {
 module spoke5LinuxVm '../modules/vm-linux.bicep' = {
   name: 'spoke5-linux-vm-deployment'
   params: {
-    vmName: '${environmentPrefix}-spoke5-linux-wus'
+    vmName: 'vm-s5-linux-wus'
     location: westUsRegion
     vmSize: linuxVmSize
     adminUsername: adminUsername

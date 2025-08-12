@@ -130,7 +130,7 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07-01' =
     typeHandlerVersion: '2.1'
     autoUpgradeMinorVersion: true
     settings: {
-      commandToExecute: 'apt-get update && apt-get install -y traceroute net-tools iputils-ping curl wget'
+      commandToExecute: 'apt-get update && apt-get install -y iproute2 iputils-ping curl wget dnsutils && echo "Networking tools installed successfully"'
     }
   }
 }

@@ -434,12 +434,28 @@ function Deploy-MultiRegionPhase {
     }
     
     try {
-        $deployment = New-AzResourceGroupDeployment `
-            -ResourceGroupName $ResourceGroupName `
-            -TemplateFile $templateFile `
-            -TemplateParameterObject $phaseParameters `
-            -Name "MultiRegion-Phase$PhaseNumber-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
-            -Verbose
+        if ($PhaseNumber -eq 2 -and $DeploymentMode -ne 'InfrastructureOnly') {
+            # Phase 2 needs special handling for SecureString password
+            $deployment = New-AzResourceGroupDeployment `
+                -ResourceGroupName $ResourceGroupName `
+                -TemplateFile $templateFile `
+                -environmentPrefix $phaseParameters.environmentPrefix `
+                -adminUsername $phaseParameters.adminUsername `
+                -adminPassword $phaseParameters.adminPassword `
+                -westUsRegion $phaseParameters.westUsRegion `
+                -centralUsRegion $phaseParameters.centralUsRegion `
+                -southeastAsiaRegion $phaseParameters.southeastAsiaRegion `
+                -Name "MultiRegion-Phase$PhaseNumber-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
+                -Verbose
+        } else {
+            # All other phases use standard parameter object
+            $deployment = New-AzResourceGroupDeployment `
+                -ResourceGroupName $ResourceGroupName `
+                -TemplateFile $templateFile `
+                -TemplateParameterObject $phaseParameters `
+                -Name "MultiRegion-Phase$PhaseNumber-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
+                -Verbose
+        }
             
         Write-Host "✅ Phase $PhaseNumber deployed successfully" -ForegroundColor Green
         return @{ Success = $true; Outputs = $deployment.Outputs }
@@ -501,12 +517,27 @@ function Deploy-ClassicPhase {
     }
     
     try {
-        $deployment = New-AzResourceGroupDeployment `
-            -ResourceGroupName $ResourceGroupName `
-            -TemplateFile $templateFile `
-            -TemplateParameterObject $phaseParameters `
-            -Name "Classic-Phase$PhaseNumber-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
-            -Verbose
+        if ($PhaseNumber -eq 2 -and $DeploymentMode -ne 'InfrastructureOnly') {
+            # Phase 2 needs special handling for SecureString password
+            $deployment = New-AzResourceGroupDeployment `
+                -ResourceGroupName $ResourceGroupName `
+                -TemplateFile $templateFile `
+                -environmentPrefix $phaseParameters.environmentPrefix `
+                -primaryRegion $phaseParameters.primaryRegion `
+                -deployerPublicIP $phaseParameters.deployerPublicIP `
+                -adminUsername $phaseParameters.adminUsername `
+                -adminPassword $phaseParameters.adminPassword `
+                -Name "Classic-Phase$PhaseNumber-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
+                -Verbose
+        } else {
+            # All other phases use standard parameter object
+            $deployment = New-AzResourceGroupDeployment `
+                -ResourceGroupName $ResourceGroupName `
+                -TemplateFile $templateFile `
+                -TemplateParameterObject $phaseParameters `
+                -Name "Classic-Phase$PhaseNumber-$(Get-Date -Format 'yyyyMMdd-HHmmss')" `
+                -Verbose
+        }
             
         Write-Host "✅ Phase $PhaseNumber deployed successfully" -ForegroundColor Green
         return @{ Success = $true; Outputs = $deployment.Outputs }
@@ -622,6 +653,27 @@ try {
     }
     
     Show-DeploymentSummary -Results $results -Architecture $Architecture
+    
+    # Configure SFI (Secure Future Initiative) features if enabled
+    if ($SfiEnable) {
+        Write-Host ""
+        Write-Host "🔒 Configuring Secure Future Initiative (SFI) features..." -ForegroundColor Cyan
+        Write-Host "🔐 Setting up Just-In-Time (JIT) VM access..." -ForegroundColor Yellow
+        
+        try {
+            $jitScriptPath = Join-Path $PSScriptRoot "Set-VmJitAccess.ps1"
+            if (Test-Path $jitScriptPath) {
+                & $jitScriptPath -ResourceGroupName $ResourceGroupName -Force
+                Write-Host "✅ SFI features configured successfully" -ForegroundColor Green
+            } else {
+                Write-Warning "JIT configuration script not found at: $jitScriptPath"
+            }
+        }
+        catch {
+            Write-Warning "Failed to configure SFI features: $($_.Exception.Message)"
+            Write-Host "💡 You can manually configure JIT access later using: .\scripts\Set-VmJitAccess.ps1 -ResourceGroupName '$ResourceGroupName'" -ForegroundColor Cyan
+        }
+    }
     
     # Check for any failures
     $failures = $results.Values | Where-Object { $_.Success -eq $false }

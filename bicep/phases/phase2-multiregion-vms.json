@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "1020210257354160397"
+      "templateHash": "9229146362758010565"
     }
   },
   "parameters": {
@@ -122,7 +122,7 @@
         "mode": "Incremental",
         "parameters": {
           "vmName": {
-            "value": "[format('{0}-spoke1-linux-wus', parameters('environmentPrefix'))]"
+            "value": "vm-s1-linux-wus"
           },
           "location": {
             "value": "[parameters('westUsRegion')]"
@@ -153,7 +153,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "1940898103741749639"
+              "templateHash": "16241560488346101564"
             }
           },
           "parameters": {
@@ -312,7 +312,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y traceroute net-tools iputils-ping curl wget"
+                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
                 }
               },
               "dependsOn": [
@@ -352,7 +352,7 @@
         "mode": "Incremental",
         "parameters": {
           "vmName": {
-            "value": "[format('{0}-spoke1-win-wus', parameters('environmentPrefix'))]"
+            "value": "vm-s1-win-wus"
           },
           "location": {
             "value": "[parameters('westUsRegion')]"
@@ -582,7 +582,7 @@
         "mode": "Incremental",
         "parameters": {
           "vmName": {
-            "value": "[format('{0}-spoke2-linux-sea', parameters('environmentPrefix'))]"
+            "value": "vm-s2-linux-sea"
           },
           "location": {
             "value": "[parameters('southeastAsiaRegion')]"
@@ -613,7 +613,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "1940898103741749639"
+              "templateHash": "16241560488346101564"
             }
           },
           "parameters": {
@@ -772,7 +772,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y traceroute net-tools iputils-ping curl wget"
+                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
                 }
               },
               "dependsOn": [
@@ -812,7 +812,7 @@
         "mode": "Incremental",
         "parameters": {
           "vmName": {
-            "value": "[format('{0}-spoke3-rras-cus', parameters('environmentPrefix'))]"
+            "value": "vm-s3-rras-cus"
           },
           "location": {
             "value": "[parameters('centralUsRegion')]"
@@ -1053,7 +1053,7 @@
         "mode": "Incremental",
         "parameters": {
           "vmName": {
-            "value": "[format('{0}-spoke4-linux-wus', parameters('environmentPrefix'))]"
+            "value": "vm-s4-linux-wus"
           },
           "location": {
             "value": "[parameters('westUsRegion')]"
@@ -1084,7 +1084,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "1940898103741749639"
+              "templateHash": "16241560488346101564"
             }
           },
           "parameters": {
@@ -1243,7 +1243,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y traceroute net-tools iputils-ping curl wget"
+                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
                 }
               },
               "dependsOn": [
@@ -1283,7 +1283,7 @@
         "mode": "Incremental",
         "parameters": {
           "vmName": {
-            "value": "[format('{0}-spoke5-linux-wus', parameters('environmentPrefix'))]"
+            "value": "vm-s5-linux-wus"
           },
           "location": {
             "value": "[parameters('westUsRegion')]"
@@ -1314,7 +1314,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "1940898103741749639"
+              "templateHash": "16241560488346101564"
             }
           },
           "parameters": {
@@ -1473,7 +1473,7 @@
                 "typeHandlerVersion": "2.1",
                 "autoUpgradeMinorVersion": true,
                 "settings": {
-                  "commandToExecute": "apt-get update && apt-get install -y traceroute net-tools iputils-ping curl wget"
+                  "commandToExecute": "apt-get update && apt-get install -y inetutils-traceroute iproute2 iputils-ping curl wget dnsutils"
                 }
               },
               "dependsOn": [
