@@ -18,18 +18,24 @@ param environmentPrefix = 'vwanlab'
 // Multi-Region VWAN Configuration  
 param vwanName = 'vwan-${environmentPrefix}'
 
-// VWAN Hub Configuration - 3 Hubs
+// VWAN Hub Configuration - 3 Hubs with dedicated infrastructure addressing
 param westUsHubName = 'vhub-${environmentPrefix}-wus'
-param westUsHubAddressPrefix = '10.0.0.0/12'    // 10.0.0.0 - 10.15.255.255
+param westUsHubAddressPrefix = '10.200.0.0/24'    // Hub infrastructure only (NOT regional traffic)
 param westUsRegion = 'West US'
 
 param centralUsHubName = 'vhub-${environmentPrefix}-cus'  
-param centralUsHubAddressPrefix = '10.16.0.0/12'  // 10.16.0.0 - 10.31.255.255
+param centralUsHubAddressPrefix = '10.201.0.0/24'  // Hub infrastructure only (NOT regional traffic)
 param centralUsRegion = 'Central US'
 
 param southeastAsiaHubName = 'vhub-${environmentPrefix}-sea'
-param southeastAsiaHubAddressPrefix = '10.32.0.0/12'  // 10.32.0.0 - 10.47.255.255
+param southeastAsiaHubAddressPrefix = '10.202.0.0/24'  // Hub infrastructure only (NOT regional traffic)
 param southeastAsiaRegion = 'Southeast Asia'
+
+// Regional Network Allocations (for spokes and route advertisements):
+// West US Region: 10.0.0.0/12 (spokes: 10.0.1.0/24, 10.0.2.0/26, 10.0.3.0/26)
+// Central US Region: 10.16.0.0/12 (spokes: 10.16.1.0/25)
+// Southeast Asia Region: 10.32.0.0/12 (spokes: 10.32.1.0/26)
+// Hub Infrastructure: 10.200.0.0/22 (hubs: 10.200.0.0/24, 10.201.0.0/24, 10.202.0.0/24)
 
 // Spoke VNet Configuration
 // Spoke 1 (West US) - Azure Firewall Hub - 3x /26 subnets
@@ -45,7 +51,7 @@ param spoke2VnetAddressSpace = '10.32.1.0/26'
 
 // Spoke 3 (Central US) - VPN connection via RRAS
 param spoke3VnetName = 'vnet-spoke3-${environmentPrefix}-cus'
-param spoke3VnetAddressSpace = '10.48.1.0/25'
+param spoke3VnetAddressSpace = '10.16.1.0/25'
 
 // Spoke 4 (West US) - Routes to Spoke 1 Firewall
 param spoke4VnetName = 'vnet-spoke4-${environmentPrefix}-wus'

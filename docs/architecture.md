@@ -1,203 +1,272 @@
-# Azure Virtual WAN Lab Architecture
+# Azure Virtual WAN Multi-Region Lab Architecture
 
-This document describes the architecture of the Azure Virtual WAN lab environment designed to demonstrate advanced networking concepts including BGP peering, Network Virtual Appliances (NVAs), and Azure Route Server integration.
+This document describes the multi-region Azure Virtual WAN lab environment designed to demonstrate advanced networking concepts including hub-to-hub connectivity, Azure Firewall Premium, VPN gateway integration, and cross-region routing.
 
 ## Overview
 
 The lab environment consists of:
 
-1. **Azure Virtual WAN Hub** - Central routing hub
-2. **Spoke VNet with NVA and Azure Route Server** - Advanced routing scenarios
-3. **Direct Spoke VNet** - Simple VWAN connectivity
-4. **Test VMs** - Connectivity validation
+1. **Three Azure Virtual WAN Hubs** - Multi-region central routing
+2. **Five Spoke VNets** - Distributed across three regions  
+3. **Azure Firewall Premium** - Advanced security and routing
+4. **VPN Gateway Integration** - IPSec connectivity for hybrid scenarios
+5. **Cross-Region Connectivity** - Global network architecture
 
 ## Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Azure Virtual WAN                       │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │                 VWAN Hub                                │    │
-│  │              (10.0.0.0/16)                              │    │
-│  │                                                         │    │
-│  └─────────────────┬───────────────────┬───────────────────┘    │
-└────────────────────┼───────────────────┼────────────────────────┘
-                     │                   │
-          ┌──────────▼──────────┐       ┌▼──────────────────┐
-          │     Spoke VNet 1    │       │   Spoke VNet 2    │
-          │   (10.1.0.0/16)     │       │  (10.2.0.0/16)    │
-          │                     │       │                   │
-          │ ┌─────────────────┐ │       │ ┌───────────────┐ │
-          │ │ GatewaySubnet   │ │       │ │   VmSubnet    │ │
-          │ │ (10.1.0.0/24)   │ │       │ │ (10.2.0.0/24) │ │
-          │ │                 │ │       │ │               │ │
-          │ │ ┌─────────────┐ │ │       │ │ ┌───────────┐ │ │
-          │ │ │   NVA VM    │ │ │       │ │ │ Test VM 2 │ │ │
-          │ │ │   (RRAS)    │ │ │       │ │ │           │ │ │
-          │ │ └─────────────┘ │ │       │ │ └───────────┘ │ │
-          │ └─────────────────┘ │       │ └───────────────┘ │
-          │                     │       └───────────────────┘
-          │ ┌─────────────────┐ │
-          │ │RouteServerSubnet│ │
-          │ │ (10.1.1.0/24)   │ │
-          │ │                 │ │
-          │ │ ┌─────────────┐ │ │
-          │ │ │Azure Route  │ │ │
-          │ │ │   Server    │ │ │◄──── BGP Peering
-          │ │ └─────────────┘ │ │
-          │ └─────────────────┘ │
-          │                     │
-          │ ┌─────────────────┐ │
-          │ │   VmSubnet      │ │
-          │ │ (10.1.2.0/24)   │ │
-          │ │                 │ │
-          │ │ ┌─────────────┐ │ │
-          │ │ │ Test VM 1   │ │ │
-          │ │ │             │ │ │
-          │ │ └─────────────┘ │ │
-          │ └─────────────────┘ │
-          └─────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              Azure Virtual WAN                                 │
+│                                                                                 │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐            │
+│  │   West US Hub   │────│ Central US Hub  │────│ SE Asia Hub     │            │
+│  │  10.200.0.0/24  │    │  10.201.0.0/24  │    │  10.202.0.0/24  │            │
+│  │                 │    │                 │    │                 │            │
+│  │ Routes:         │    │ Routes:         │    │ Routes:         │            │
+│  │ 10.0.0.0/12     │    │ 10.16.0.0/12    │    │ 10.32.0.0/12    │            │
+│  └─────┬───┬───┬───┘    └────────┬────────┘    └────────┬────────┘            │
+└────────┼───┼───┼─────────────────┼─────────────────────┼─────────────────────┘
+         │   │   │                 │                     │
+         │   │   │                 │                     │
+    ┌────▼┐ ┌▼─┐ ┌▼──┐         ┌───▼────┐           ┌────▼────┐
+    │Spk1 │ │S4│ │S5 │         │ Spk3   │           │ Spk2    │
+    │Fire │ │  │ │   │         │ VPN    │           │ Linux   │
+    │wall │ │  │ │   │         │ RRAS   │           │ VMs     │
+    └─────┘ └──┘ └───┘         └────────┘           └─────────┘
+   
+West US Region          Central US Region        SE Asia Region
+10.0.0.0/12            10.16.0.0/12             10.32.0.0/12
 ```
 
-## Component Details
+## Regional Architecture
 
-### Azure Virtual WAN Hub
+### West US Region (10.0.0.0/12)
 
-- **Address Space**: 10.0.0.0/16
-- **Type**: Standard VWAN Hub
-- **Features**:
-  - Branch-to-branch connectivity enabled
-  - ExpressRoute routing preference
-  - Default route table for propagation
+**VWAN Hub**: `10.200.0.0/24` (Infrastructure)  
+**Regional Block**: `10.0.0.0/12` (Advertised to spokes)
 
-### Spoke VNet 1 (Advanced Routing)
+#### Spoke 1 - Azure Firewall Hub (10.0.1.0/24)
+- **VmSubnet**: `10.0.1.0/26` - Virtual machines
+- **AzureFirewallSubnet**: `10.0.1.64/26` - Azure Firewall Premium
+- **AzureFirewallManagementSubnet**: `10.0.1.128/26` - Firewall management
 
-- **Address Space**: 10.1.0.0/16
-- **Subnets**:
-  - **GatewaySubnet** (10.1.0.0/24): Hosts the NVA VM
-  - **RouteServerSubnet** (10.1.1.0/24): Hosts Azure Route Server
-  - **VmSubnet** (10.1.2.0/24): Hosts test VMs
+#### Spoke 4 - Protected Workload (10.0.2.0/26)
+- **VmSubnet**: `10.0.2.0/26` - Routes via Azure Firewall
 
-#### Network Virtual Appliance (NVA)
+#### Spoke 5 - Protected Workload (10.0.3.0/26)  
+- **VmSubnet**: `10.0.3.0/26` - Routes via Azure Firewall
 
-- **VM Type**: Windows Server 2022
-- **Role**: RRAS-enabled router for BGP peering
-- **IP Forwarding**: Enabled
-- **BGP Configuration**:
-  - Local ASN: 65001
-  - Peers with Azure Route Server
-  - Propagates routes to VWAN Hub
+### Central US Region (10.16.0.0/12)
 
-#### Azure Route Server
+**VWAN Hub**: `10.201.0.0/24` (Infrastructure)  
+**Regional Block**: `10.16.0.0/12` (Advertised to spokes)
 
-- **Purpose**: Enable BGP peering between NVA and Azure
-- **Configuration**:
-  - Branch-to-branch traffic: Enabled
-  - BGP peering with NVA VM
-  - Route propagation to VNet and VWAN Hub
+#### Spoke 3 - VPN Gateway (10.16.1.0/25)
+- **VmSubnet**: `10.16.1.0/27` - RRAS VM for VPN termination
+- **GatewaySubnet**: `10.16.1.32/27` - VPN Gateway subnet
 
-### Spoke VNet 2 (Direct Connection)
+### Southeast Asia Region (10.32.0.0/12)
 
-- **Address Space**: 10.2.0.0/16
-- **Subnets**:
-  - **VmSubnet** (10.2.0.0/24): Hosts test VM
-- **Connection**: Direct to VWAN Hub
-- **Purpose**: Validate automatic route propagation
+**VWAN Hub**: `10.202.0.0/24` (Infrastructure)  
+**Regional Block**: `10.32.0.0/12` (Advertised to spokes)
 
-### Network Security Groups
+#### Spoke 2 - Linux Environment (10.32.1.0/26)
+- **VmSubnet**: `10.32.1.0/26` - Linux test VMs
 
-#### Spoke 1 NSG Rules
+## Key Architectural Principles
 
-1. **AllowRDP** (Priority 1000): TCP 3389 inbound
-2. **AllowBGP** (Priority 1100): TCP 179 inbound
-3. **AllowICMP** (Priority 1200): ICMP inbound
+### Address Space Separation
 
-#### Spoke 2 NSG Rules
+**Critical Design**: VWAN hub infrastructure addresses are completely separate from regional spoke allocations to prevent routing conflicts.
 
-1. **AllowRDP** (Priority 1000): TCP 3389 inbound
-2. **AllowICMP** (Priority 1200): ICMP inbound
+- **Hub Infrastructure**: `10.200.0.0/22` block (10.200.0.0 - 10.203.255.255)
+  - Each hub uses `/24` for internal routing infrastructure
+  - Never overlaps with spoke network ranges
+  
+- **Regional Spoke Allocations**: Large `/12` blocks for regional growth
+  - Each region's spokes deployed within their regional `/12` 
+  - Advertised via VWAN hub route tables to spokes in that region
 
-## Routing Flow
+### Azure Firewall Integration
 
-### BGP Route Propagation
+#### Firewall Premium Features
+- **TLS Inspection**: Deep packet inspection with certificate validation
+- **IDPS**: Intrusion Detection and Prevention System
+- **URL Filtering**: Category-based web filtering
+- **Application Rules**: FQDN-based filtering
 
-1. **NVA VM** learns routes from Azure Route Server
-2. **Azure Route Server** propagates routes to:
-   - Connected VNet (Spoke VNet 1)
-   - VWAN Hub (via VNet connection)
-3. **VWAN Hub** distributes routes to:
-   - All connected spoke VNets
-   - Other VWAN components
+#### Traffic Flow via Firewall
+1. **Spoke 4 & 5** → Default route (0.0.0.0/0) → **Azure Firewall**
+2. **Azure Firewall** → Security inspection → **Destination**
+3. **Return Traffic** → **Azure Firewall** → **Source spoke**
 
-### Traffic Flow Examples
+### VPN Gateway Integration
 
-#### Test VM 1 to Test VM 2
+#### IPSec Connectivity
+- **Local Network Gateway**: Defines on-premises address space
+- **VPN Connection**: IPSec tunnel between Azure and on-premises
+- **BGP Over IPSec**: Dynamic routing via BGP protocol
+- **RRAS VM**: Windows RRAS for VPN termination testing
 
-1. **Source**: Test VM 1 (10.1.2.x)
-2. **Route**: Via VWAN Hub
-3. **Destination**: Test VM 2 (10.2.0.x)
-4. **Path**: Spoke VNet 1 → VWAN Hub → Spoke VNet 2
+### Cross-Region Routing
 
-#### External Route Advertisement
+#### Hub-to-Hub Connectivity
+- **Automatic**: VWAN provides automatic hub-to-hub connectivity  
+- **Global Transit**: Traffic can flow between any regions
+- **Route Propagation**: Routes automatically shared between hubs
 
-1. **NVA VM** can advertise custom routes via BGP
-2. **Azure Route Server** propagates to Azure infrastructure
-3. **VWAN Hub** distributes to all connected networks
+#### Route Advertisement Strategy
+```
+West US Hub Route Table:
+├── Local: 10.200.0.0/24 (hub infrastructure)
+├── Advertised: 10.0.0.0/12 (regional summary)
+└── Learned: 10.16.0.0/12, 10.32.0.0/12 (from other hubs)
 
-## High Availability Considerations
+Central US Hub Route Table:  
+├── Local: 10.201.0.0/24 (hub infrastructure)
+├── Advertised: 10.16.0.0/12 (regional summary)
+└── Learned: 10.0.0.0/12, 10.32.0.0/12 (from other hubs)
 
-### Redundancy Options
+SE Asia Hub Route Table:
+├── Local: 10.202.0.0/24 (hub infrastructure) 
+├── Advertised: 10.32.0.0/12 (regional summary)
+└── Learned: 10.0.0.0/12, 10.16.0.0/12 (from other hubs)
+```
 
-- **Multiple NVAs**: Deploy NVAs in different availability zones
-- **Load Balancing**: Use Azure Load Balancer for NVA redundancy
-- **Route Server**: Automatically provides HA with multiple instances
+## Network Security Groups
 
-### Monitoring
+### Regional NSG Configurations
 
-- **Azure Monitor**: Track BGP session status
-- **Network Watcher**: Monitor connectivity and routing
-- **Custom Scripts**: Automated connectivity testing
+#### West US Spokes (Firewall Protected)
+```
+Priority 1000: AllowRDPFromDeployer (TCP 3389 from deployer IP)
+Priority 1001: AllowSSHFromDeployer (TCP 22 from deployer IP)
+Priority 1100: AllowBGPFromVirtualNetwork (TCP 179 from VirtualNetwork)
+Priority 1200: AllowICMPFromVirtualNetwork (ICMP from VirtualNetwork)
+Priority 1300: AllowSSHFromVirtualNetwork (TCP 22 from VirtualNetwork)
+```
 
-## Security Considerations
+#### Central US Spoke (VPN)
+```
+Priority 1000: AllowRDPFromDeployer (TCP 3389 from deployer IP)
+Priority 1100: AllowBGPFromVirtualNetwork (TCP 179 from VirtualNetwork)  
+Priority 1200: AllowICMPFromVirtualNetwork (ICMP from VirtualNetwork)
+Priority 1500: AllowIPSecFromInternet (UDP 500, 4500 from Internet)
+```
 
-### Network Segmentation
+#### Southeast Asia Spoke (Direct)
+```
+Priority 1000: AllowSSHFromDeployer (TCP 22 from deployer IP)
+Priority 1200: AllowICMPFromVirtualNetwork (ICMP from VirtualNetwork)
+Priority 1300: AllowSSHFromVirtualNetwork (TCP 22 from VirtualNetwork)
+```
 
-- **NSGs**: Control traffic between subnets
-- **Route Filtering**: Control route advertisement
-- **Firewall Integration**: Can be added to VWAN Hub
+## Traffic Flow Examples
 
-### Access Control
+### Cross-Region Communication
 
-- **VM Access**: Secured via NSGs and public key authentication
-- **Management**: Separate management subnet for administrative access
-- **BGP Security**: MD5 authentication for BGP sessions (optional)
+#### Spoke 1 (West US) to Spoke 2 (SE Asia)
+```
+Source: VM in Spoke 1 (10.0.1.x)
+Path: Spoke 1 → West US Hub → SE Asia Hub → Spoke 2  
+Destination: VM in Spoke 2 (10.32.1.x)
+Route: Automatic via VWAN global transit
+```
 
-## Scalability
+#### Spoke 4 (West US) to Spoke 3 (Central US)
+```
+Source: VM in Spoke 4 (10.0.2.x)
+Path: Spoke 4 → Azure Firewall → West US Hub → Central US Hub → Spoke 3
+Destination: VM in Spoke 3 (10.16.1.x) 
+Security: Inspected by Azure Firewall Premium
+```
 
-### Expansion Options
+### VPN Traffic Flow
 
-- **Additional Spokes**: Easy to add more spoke VNets
-- **Multi-Region**: Deploy additional VWAN Hubs in other regions
-- **Hybrid Connectivity**: Add VPN or ExpressRoute connections
+#### On-Premises to Azure (via VPN)
+```
+Source: On-premises network (192.168.x.x)
+Path: Internet → VPN Gateway → Spoke 3 → Central US Hub → Other spokes
+Protocol: IPSec with BGP routing
+Encryption: AES-256, SHA-256
+```
 
-### Performance Considerations
+## High Availability & Redundancy
 
-- **VM Sizing**: Scale NVA VMs based on throughput requirements
-- **Route Server Limits**: Consider route advertisement limits
-- **VWAN Throughput**: Monitor hub throughput utilization
+### Multi-Region Resilience
+- **Geographic Distribution**: Three regions provide fault tolerance
+- **Automatic Failover**: VWAN provides automatic hub failover
+- **Zone Redundancy**: Components deployed across availability zones
 
-## Use Cases
+### Azure Firewall HA
+- **Zone Redundancy**: Firewall deployed across multiple zones
+- **Health Monitoring**: Automatic detection and failover
+- **Session Persistence**: Stateful connection tracking
 
-### Primary Scenarios
+### VPN Gateway Redundancy
+- **Active-Standby**: Automatic failover between gateway instances
+- **BGP Routing**: Dynamic route updates during failover
+- **Connection Monitoring**: Continuous tunnel health checking
 
-1. **Hybrid Cloud Connectivity**: Connect on-premises networks via NVA
-2. **Advanced Routing**: Custom routing policies via BGP
-3. **Network Function Virtualization**: Deploy network services in Azure
-4. **Multi-Cloud Connectivity**: Connect to other cloud providers
+## Security Architecture
 
-### Testing Scenarios
+### Defense in Depth
 
-1. **Route Propagation**: Verify automatic route learning
-2. **Failover Testing**: Test NVA redundancy
-3. **Performance Testing**: Measure throughput and latency
-4. **Security Testing**: Validate traffic filtering and isolation
+#### Network Layer Security
+- **NSGs**: Subnet-level traffic filtering
+- **Azure Firewall**: Application-layer inspection
+- **Private Endpoints**: Secure service connectivity
+
+#### Identity & Access
+- **Just-In-Time VM Access**: Time-limited administrative access
+- **Azure AD Integration**: Centralized identity management  
+- **RBAC**: Role-based access controls
+
+#### Data Protection
+- **Encryption in Transit**: All inter-region traffic encrypted
+- **Disk Encryption**: VM disks encrypted at rest
+- **Key Management**: Azure Key Vault integration
+
+### Compliance Considerations
+- **Network Segmentation**: Isolated environments per region
+- **Audit Logging**: Comprehensive logging and monitoring
+- **Data Residency**: Regional data placement controls
+
+## Scalability & Performance
+
+### Horizontal Scaling
+- **Additional Spokes**: Easy addition of new spoke VNets
+- **New Regions**: Simple deployment of additional hubs
+- **Workload Distribution**: Regional workload placement
+
+### Performance Optimization
+- **Regional Proximity**: Workloads placed near users
+- **Direct Connectivity**: Minimal hop count between spokes
+- **Bandwidth Allocation**: Right-sized connections for workloads
+
+### Growth Planning
+- **Address Space**: Large `/12` blocks allow massive growth
+- **Hub Capacity**: Standard hubs support enterprise scale
+- **Route Limits**: Designed within Azure platform limits
+
+## Use Cases & Scenarios
+
+### Enterprise Multi-Region Deployment
+- **Global Applications**: Applications distributed across regions
+- **Disaster Recovery**: Cross-region backup and failover
+- **Compliance**: Regional data placement requirements
+
+### Hybrid Cloud Connectivity  
+- **Site-to-Site VPN**: Secure connection to on-premises
+- **ExpressRoute Integration**: High-bandwidth private connectivity
+- **Multi-Cloud**: Integration with other cloud providers
+
+### Advanced Security Scenarios
+- **Zero Trust**: Comprehensive traffic inspection
+- **Micro-Segmentation**: Granular network isolation
+- **Threat Detection**: Advanced security monitoring
+
+### Development & Testing
+- **Environment Isolation**: Separate dev/test/prod environments
+- **Cross-Region Testing**: Multi-region application testing
+- **Performance Testing**: Network latency and throughput validation

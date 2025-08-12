@@ -15,8 +15,8 @@ param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
 @description('VPN Gateway name')
 param vpnGatewayName string = 'vpngw-${environmentPrefix}-cus'
 
-@description('Spoke 3 address space for local network gateway')
-param spoke3AddressSpace string = '10.48.1.0/25'
+@description('Spoke 3 address space for local network gateway - corrected to Central US allocation')
+param spoke3AddressSpace string = '10.16.1.0/25'
 
 @description('Tags to apply to all resources')
 param tags object = {

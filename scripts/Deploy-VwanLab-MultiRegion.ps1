@@ -129,13 +129,11 @@ $script:MultiRegionConfig = @{
     
     # VWAN Hub Configuration
     WestUsHubName = 'vhub-vwanlab-wus'
-    WestUsHubAddressPrefix = '10.0.0.0/12'
-    CentralUsHubName = 'vhub-vwanlab-cus'
-    CentralUsHubAddressPrefix = '10.16.0.0/12'
+    WestUsHubAddressPrefix = '10.200.0.0/24'
+    CentralUsHubName = 'vhub-vwanlab-cus'  
+    CentralUsHubAddressPrefix = '10.201.0.0/24'
     SoutheastAsiaHubName = 'vhub-vwanlab-sea'
-    SoutheastAsiaHubAddressPrefix = '10.32.0.0/12'
-    
-    # Spoke Configuration
+    SoutheastAsiaHubAddressPrefix = '10.202.0.0/24'    # Spoke Configuration
     Spoke1VnetName = 'vnet-spoke1-vwanlab-wus'
     Spoke1VnetAddressSpace = '10.0.1.0/24'
     Spoke2VnetName = 'vnet-spoke2-vwanlab-sea'

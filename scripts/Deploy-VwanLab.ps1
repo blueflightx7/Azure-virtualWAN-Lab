@@ -202,6 +202,40 @@ function Write-PhaseHeader {
     Write-Host ""
 }
 
+function Test-PhaseAlreadyDeployed {
+    param(
+        [string]$ResourceGroupName,
+        [int]$PhaseNumber,
+        [string]$Architecture
+    )
+    
+    try {
+        # Check for successful deployment in the last 24 hours
+        $deploymentPattern = if ($Architecture -eq 'MultiRegion') { 
+            "MultiRegion-Phase$PhaseNumber-*" 
+        } else { 
+            "Classic-Phase$PhaseNumber-*" 
+        }
+        
+        $recentDeployments = az deployment group list --resource-group $ResourceGroupName --query "[?contains(name, 'Phase$PhaseNumber') && properties.provisioningState=='Succeeded' && properties.timestamp >= '$(((Get-Date).AddDays(-1)).ToString('yyyy-MM-ddTHH:mm:ss'))'].{Name:name, State:properties.provisioningState, Timestamp:properties.timestamp}" --output json 2>$null
+        
+        if ($recentDeployments -and $recentDeployments -ne '[]') {
+            $deployments = $recentDeployments | ConvertFrom-Json
+            if ($deployments.Count -gt 0) {
+                $latestDeployment = $deployments | Sort-Object Timestamp -Descending | Select-Object -First 1
+                Write-Host "  ✅ Phase $PhaseNumber already deployed successfully: $($latestDeployment.Name)" -ForegroundColor Green
+                return $true
+            }
+        }
+        
+        return $false
+    }
+    catch {
+        Write-Verbose "Error checking deployment history: $($_.Exception.Message)"
+        return $false
+    }
+}
+
 function Test-Prerequisites {
     Write-Host "🔍 Checking prerequisites..." -ForegroundColor Yellow
     
@@ -342,6 +376,42 @@ function Get-VmCredentials {
     return @{
         Username = $username
         Password = $password
+    }
+}
+
+function Test-PhaseAlreadyDeployed {
+    param(
+        [string]$ResourceGroupName,
+        [int]$PhaseNumber,
+        [string]$Architecture
+    )
+    
+    try {
+        # Check for successful deployments in the last 24 hours
+        $deploymentName = if ($Architecture -eq 'MultiRegion') { 
+            "MultiRegion-Phase$PhaseNumber-*" 
+        } else { 
+            "Classic-Phase$PhaseNumber-*" 
+        }
+        
+        # Get recent successful deployments
+        $recentDeployments = az deployment group list --resource-group $ResourceGroupName --query "[?contains(name, 'Phase$PhaseNumber') && properties.provisioningState=='Succeeded' && properties.timestamp >= '$(((Get-Date).AddHours(-24)).ToString('yyyy-MM-ddTHH:mm:ssZ'))'].{Name:name, Timestamp:properties.timestamp}" --output json 2>$null
+        
+        if ($recentDeployments -and $recentDeployments -ne "[]") {
+            $deployments = $recentDeployments | ConvertFrom-Json
+            if ($deployments.Count -gt 0) {
+                $latestDeployment = $deployments | Sort-Object Timestamp -Descending | Select-Object -First 1
+                Write-Host "✅ Phase $PhaseNumber already deployed successfully: $($latestDeployment.Name)" -ForegroundColor Green
+                Write-Host "   Deployment time: $($latestDeployment.Timestamp)" -ForegroundColor Gray
+                return $true
+            }
+        }
+        
+        return $false
+    }
+    catch {
+        Write-Warning "Failed to check deployment history: $($_.Exception.Message)"
+        return $false
     }
 }
 
@@ -566,7 +636,9 @@ function Show-DeploymentSummary {
     
     foreach ($phase in $Results.Keys | Sort-Object) {
         $result = $Results[$phase]
-        if ($result.Skipped) {
+        if ($result.AlreadyDeployed) {
+            Write-Host "  Phase $phase - ALREADY DEPLOYED ✅" -ForegroundColor Green
+        } elseif ($result.Skipped) {
             Write-Host "  Phase $phase - SKIPPED" -ForegroundColor Yellow
         } elseif ($result.Success) {
             Write-Host "  Phase $phase - SUCCESS ✅" -ForegroundColor Green
@@ -633,6 +705,13 @@ try {
     $phasesToDeploy = if ($Phase) { @($Phase) } else { 1..$config.MaxPhases }
     
     foreach ($phaseNum in $phasesToDeploy) {
+        # Check if phase was already successfully deployed
+        if (Test-PhaseAlreadyDeployed -ResourceGroupName $ResourceGroupName -PhaseNumber $phaseNum -Architecture $Architecture) {
+            Write-Host "⏭️ Skipping Phase $phaseNum - already deployed successfully" -ForegroundColor Yellow
+            $results[$phaseNum] = @{ Success = $true; Skipped = $true; AlreadyDeployed = $true }
+            continue
+        }
+        
         if ($Architecture -eq 'MultiRegion') {
             $result = Deploy-MultiRegionPhase -PhaseNumber $phaseNum -Parameters @{} -DeployerPublicIp $deployerPublicIp -Credentials $credentials -FirewallPrivateIp $firewallPrivateIp
             

@@ -32,7 +32,7 @@ This lab environment showcases two architecture options:
 ```mermaid
 graph TB
     subgraph "West US Region"
-        WHub["VWAN Hub West<br/>10.0.0.0/12"]
+        WHub["VWAN Hub West<br/>10.200.0.0/24<br/>Routes: 10.0.0.0/12"]
         
         subgraph "Spoke 1 - Firewall Hub"
             S1["VNet 10.0.1.0/24"]
@@ -53,7 +53,7 @@ graph TB
     end
     
     subgraph "Central US Region"
-        CHub["VWAN Hub Central<br/>10.16.0.0/12"]
+        CHub["VWAN Hub Central<br/>10.201.0.0/24<br/>Routes: 10.16.0.0/12"]
         VPN["VPN Gateway"]
         
         subgraph "Spoke 3 - VPN Site"
@@ -63,7 +63,7 @@ graph TB
     end
     
     subgraph "Southeast Asia Region"
-        SHub["VWAN Hub SEA<br/>10.32.0.0/12"]
+        SHub["VWAN Hub SEA<br/>10.202.0.0/24<br/>Routes: 10.32.0.0/12"]
         
         subgraph "Spoke 2 - Remote"
             S2["VNet 10.32.1.0/26"]
@@ -208,6 +208,7 @@ cd Azure-VWAN-Lab
 | Document | Description |
 |----------|-------------|
 | **[💵 2025 Cost Analysis Update](docs/2025-cost-analysis-update.md)** | Latest pricing analysis and cost breakdowns |
+| **[📈 Multi-Region Cost Analysis](docs/multiregion-cost-analysis-2025.md)** | Comprehensive multi-region architecture costs |
 | **[📈 Cost Update Summary](docs/cost-update-summary.md)** | Summary of recent cost optimizations |
 | **[🏷️ Spoke 3 Naming Update](docs/spoke3-naming-update-summary.md)** | Route Server to Spoke 3 renaming summary |
 | **[✅ Topology Validation](docs/TOPOLOGY-VALIDATION-COMPLETE.md)** | Complete architecture validation results |
@@ -228,15 +229,28 @@ cd Azure-VWAN-Lab
 
 ## 💰 Cost Overview
 
+### Standard Lab Configuration (Single Region)
 | Component | Monthly Cost (2025) | Usage |
 |-----------|-------------------|-------|
 | **VWAN Hub** | ~$184.00 | 24/7 Hub Operations |
 | **Route Server** | ~$184.00 | 24/7 BGP Services |
 | **4x Virtual Machines** | ~$91.51 | Standard B-Series VMs |
 | **Storage & Networking** | ~$15.00 | Managed Disks, Public IPs |
-| **Total** | **~$474.51/month** | **$0.65/hour** |
+| **Total (Standard Lab)** | **~$474.51/month** | **$0.65/hour** |
 
-> 💡 **Cost Optimization**: See our [Cost Optimization Guide](docs/cost-optimization-guide.md) for strategies to reduce costs by up to 70% using scheduling and right-sizing.
+### Multi-Region Architecture (Production)
+| Component | Monthly Cost (2025) | Usage |
+|-----------|-------------------|-------|
+| **3x VWAN Hubs** | ~$547.50 | Multi-region operations |
+| **Azure Firewall Premium** | ~$1,402.50 | Enterprise security |
+| **11x Virtual Machines** | ~$400.76 | Mixed VM sizes |
+| **Storage & Security** | ~$715.57 | Comprehensive monitoring |
+| **Additional Services** | ~$367.03 | Bastion, private endpoints |
+| **Total (Multi-Region)** | **~$4,341.26/month** | **$5.95/hour** |
+
+> 📊 **Detailed Analysis**: See [Multi-Region Cost Analysis](docs/multiregion-cost-analysis-2025.md) for comprehensive breakdowns and optimization strategies.
+
+> 💡 **Cost Optimization**: Reduce costs by 40-60% using development environments, auto-shutdown, and reserved instances. See our [Cost Optimization Guide](docs/cost-optimization-guide.md).
 
 ## 🔐 Security Features (SFI - Secure Future Initiative)
 

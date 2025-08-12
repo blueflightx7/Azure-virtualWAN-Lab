@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "6663644716347917612"
+      "templateHash": "17835848959890098756"
     }
   },
   "parameters": {
@@ -32,9 +32,9 @@
     },
     "westUsHubAddressPrefix": {
       "type": "string",
-      "defaultValue": "10.0.0.0/12",
+      "defaultValue": "10.200.0.0/24",
       "metadata": {
-        "description": "West US VWAN hub address prefix"
+        "description": "West US VWAN hub address prefix - dedicated hub infrastructure range (outside regional /12)"
       }
     },
     "westUsRegion": {
@@ -53,9 +53,9 @@
     },
     "centralUsHubAddressPrefix": {
       "type": "string",
-      "defaultValue": "10.16.0.0/12",
+      "defaultValue": "10.201.0.0/24",
       "metadata": {
-        "description": "Central US VWAN hub address prefix"
+        "description": "Central US VWAN hub address prefix - dedicated hub infrastructure range (outside regional /12)"
       }
     },
     "centralUsRegion": {
@@ -74,9 +74,9 @@
     },
     "southeastAsiaHubAddressPrefix": {
       "type": "string",
-      "defaultValue": "10.32.0.0/12",
+      "defaultValue": "10.202.0.0/24",
       "metadata": {
-        "description": "Southeast Asia VWAN hub address prefix"
+        "description": "Southeast Asia VWAN hub address prefix - dedicated hub infrastructure range (outside regional /12)"
       }
     },
     "southeastAsiaRegion": {
@@ -146,7 +146,7 @@
       "type": "string",
       "defaultValue": "10.16.1.0/25",
       "metadata": {
-        "description": "Spoke 3 VNet address space"
+        "description": "Spoke 3 VNet address space - within Central US 10.16.0.0/12 allocation"
       }
     },
     "spoke4VnetName": {

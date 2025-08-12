@@ -30,6 +30,7 @@ resource virtualWan 'Microsoft.Network/virtualWans@2024-05-01' = {
 
 // Deploy Virtual WAN Hub
 // Hub provides central connectivity and routing for all spokes
+// Uses small dedicated address space, routes are advertised separately
 resource virtualHub 'Microsoft.Network/virtualHubs@2024-05-01' = {
   name: vwanHubName
   location: location
@@ -38,7 +39,7 @@ resource virtualHub 'Microsoft.Network/virtualHubs@2024-05-01' = {
     virtualWan: {
       id: virtualWan.id
     }
-    addressPrefix: vwanHubAddressPrefix // ✅ BEST PRACTICE: /16 allows for future growth
+    addressPrefix: vwanHubAddressPrefix // ✅ CORRECT: Small /24 for hub infrastructure only
     sku: 'Standard' // ✅ REQUIRED: Standard SKU for advanced routing
     hubRoutingPreference: 'VpnGateway' // ✅ BEST PRACTICE: Optimize for VPN traffic
     allowBranchToBranchTraffic: true // ✅ TRANSIT: Enable hub as transit point

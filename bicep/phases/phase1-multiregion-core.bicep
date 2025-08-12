@@ -13,26 +13,32 @@ param vwanName string = '${environmentPrefix}-vwan'
 // West US Hub Configuration
 @description('West US VWAN hub name')
 param westUsHubName string = 'vhub-${environmentPrefix}-wus'
-@description('West US VWAN hub address prefix')
-param westUsHubAddressPrefix string = '10.0.0.0/12'
+@description('West US VWAN hub address prefix - dedicated hub infrastructure range (outside regional /12)')
+param westUsHubAddressPrefix string = '10.200.0.0/24'
 @description('West US region')
 param westUsRegion string = 'West US'
 
 // Central US Hub Configuration  
 @description('Central US VWAN hub name')
 param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
-@description('Central US VWAN hub address prefix')
-param centralUsHubAddressPrefix string = '10.16.0.0/12'
+@description('Central US VWAN hub address prefix - dedicated hub infrastructure range (outside regional /12)')
+param centralUsHubAddressPrefix string = '10.201.0.0/24'
 @description('Central US region')
 param centralUsRegion string = 'Central US'
 
 // Southeast Asia Hub Configuration
 @description('Southeast Asia VWAN hub name')
 param southeastAsiaHubName string = 'vhub-${environmentPrefix}-sea'
-@description('Southeast Asia VWAN hub address prefix')
-param southeastAsiaHubAddressPrefix string = '10.32.0.0/12'
+@description('Southeast Asia VWAN hub address prefix - dedicated hub infrastructure range (outside regional /12)')
+param southeastAsiaHubAddressPrefix string = '10.202.0.0/24'
 @description('Southeast Asia region')
 param southeastAsiaRegion string = 'Southeast Asia'
+
+// Regional Network Allocations (for route advertisements and spoke deployments)
+// West US Region: 10.0.0.0/12 (10.0.0.0 - 10.15.255.255) - spokes and route advertisements
+// Central US Region: 10.16.0.0/12 (10.16.0.0 - 10.31.255.255) - spokes and route advertisements
+// Southeast Asia Region: 10.32.0.0/12 (10.32.0.0 - 10.47.255.255) - spokes and route advertisements
+// Hub Infrastructure: 10.200.0.0/22 (10.200.0.0 - 10.203.255.255) - VWAN hubs only
 
 // Spoke 1 Configuration (West US) - Azure Firewall Hub
 @description('Spoke 1 VNet name')
@@ -55,8 +61,8 @@ param spoke2VnetAddressSpace string = '10.32.1.0/26'
 // Spoke 3 Configuration (Central US)
 @description('Spoke 3 VNet name')
 param spoke3VnetName string = 'vnet-spoke3-${environmentPrefix}-cus'
-@description('Spoke 3 VNet address space')
-param spoke3VnetAddressSpace string = '10.48.1.0/25'
+@description('Spoke 3 VNet address space - within Central US 10.16.0.0/12 allocation')
+param spoke3VnetAddressSpace string = '10.16.1.0/25'
 
 // Spoke 4 Configuration (West US)
 @description('Spoke 4 VNet name')
