@@ -129,51 +129,67 @@ function Set-VmJitAccess {
         # Get the VM to get its resource ID and location
         $vm = Get-AzVM -ResourceGroupName $ResourceGroupName -Name $VmName -ErrorAction Stop
         
-        # Try using Azure CLI for JIT configuration (more reliable than REST API)
+        # Try using REST API through PowerShell (Azure CLI doesn't support JIT policy creation)
         $vmResourceId = $vm.Id
+        $subscriptionId = (Get-AzContext).Subscription.Id
+        $location = $vm.Location
         
-        # Create properly formatted JSON for the JIT policy
-        $jitPolicyJson = @"
-{
-    "kind": "Basic",
-    "properties": {
-        "virtualMachines": [
-            {
-                "id": "$vmResourceId",
-                "ports": [
-                    {
-                        "number": 3389,
-                        "protocol": "TCP",
-                        "allowedSourceAddressPrefix": "*",
-                        "maxRequestAccessDuration": "PT3H"
-                    },
-                    {
-                        "number": 22,
-                        "protocol": "TCP", 
-                        "allowedSourceAddressPrefix": "*",
-                        "maxRequestAccessDuration": "PT3H"
+        # Create JIT policy using REST API
+        $jitPolicy = @{
+            kind = "Basic"
+            properties = @{
+                virtualMachines = @(
+                    @{
+                        id = $vmResourceId
+                        ports = @(
+                            @{
+                                number = 3389
+                                protocol = "TCP"
+                                allowedSourceAddressPrefix = "*"
+                                maxRequestAccessDuration = "PT3H"
+                            }
+                            @{
+                                number = 22
+                                protocol = "TCP"
+                                allowedSourceAddressPrefix = "*"
+                                maxRequestAccessDuration = "PT3H"
+                            }
+                        )
                     }
-                ]
+                )
             }
-        ]
-    }
-}
-"@
+        }
         
-        # Write to temp file for Azure CLI
-        $tempFile = [System.IO.Path]::GetTempFileName()
-        $jitPolicyJson | Out-File -FilePath $tempFile -Encoding UTF8
+        # Get access token for REST API (using newer method)
+        try {
+            $tokenResult = Get-AzAccessToken -ResourceUrl "https://management.azure.com/"
+            $token = $tokenResult.Token
+        } catch {
+            # Fallback to older method if available
+            $context = Get-AzContext
+            $token = [Microsoft.Azure.Commands.Common.Authentication.AzureSession]::Instance.AuthenticationFactory.Authenticate($context.Account, $context.Environment, $context.Tenant.Id, $null, "Never", $null, "https://management.azure.com/").AccessToken
+        }
         
-        # Create JIT policy using Azure CLI
-        $jitResult = az security jit-policy create --location $vm.Location --name "jit-policy-$VmName" --resource-group $ResourceGroupName --policy "@$tempFile" 2>&1
-        Remove-Item $tempFile -Force -ErrorAction SilentlyContinue
+        # Create REST API request
+        $uri = "https://management.azure.com/subscriptions/$subscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.Security/locations/$location/jitNetworkAccessPolicies/default?api-version=2020-01-01"
+        $headers = @{
+            'Authorization' = "Bearer $token"
+            'Content-Type' = 'application/json'
+        }
         
-        if ($LASTEXITCODE -eq 0) {
+        $body = $jitPolicy | ConvertTo-Json -Depth 10
+        
+        try {
+            $response = Invoke-RestMethod -Uri $uri -Method PUT -Headers $headers -Body $body
             Write-Host "    ✅ JIT access policy configured successfully" -ForegroundColor Green
             return $true
-        } else {
-            $errorMsg = if ($jitResult) { $jitResult -join "; " } else { "Unknown Azure CLI error (exit code: $LASTEXITCODE)" }
-            throw "Azure CLI JIT configuration failed: $errorMsg"
+        } catch {
+            $errorDetails = $_.Exception.Message
+            if ($_.Exception.Response) {
+                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                $errorDetails += " Response: " + $reader.ReadToEnd()
+            }
+            throw "REST API JIT configuration failed: $errorDetails"
         }
     }
     catch {
