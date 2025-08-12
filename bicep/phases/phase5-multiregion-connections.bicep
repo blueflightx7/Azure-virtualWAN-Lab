@@ -76,36 +76,64 @@ resource spoke2Connection 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnec
   }
 }
 
-// Connect Spoke 4 to West US Hub
-resource spoke4Connection 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
-  parent: westUsHub
-  name: '${spoke4VnetName}-connection'
+// Traditional VNet Peering: Spoke 4 ↔ Spoke 1 (bidirectional)
+resource spoke4ToSpoke1Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01' = {
+  parent: spoke4Vnet
+  name: 'spoke4-to-spoke1'
+  properties: {
+    remoteVirtualNetwork: {
+      id: spoke1Vnet.id
+    }
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+    allowGatewayTransit: false
+    useRemoteGateways: false
+  }
+}
+
+resource spoke1ToSpoke4Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01' = {
+  parent: spoke1Vnet
+  name: 'spoke1-to-spoke4'
   properties: {
     remoteVirtualNetwork: {
       id: spoke4Vnet.id
     }
-    allowHubToRemoteVnetTransit: true
-    allowRemoteVnetToUseHubVnetGateways: true
-    enableInternetSecurity: true
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+    allowGatewayTransit: false
+    useRemoteGateways: false
   }
 }
 
-// Connect Spoke 5 to West US Hub  
-resource spoke5Connection 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
-  parent: westUsHub
-  name: '${spoke5VnetName}-connection'
+// Traditional VNet Peering: Spoke 5 ↔ Spoke 1 (bidirectional)
+resource spoke5ToSpoke1Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01' = {
+  parent: spoke5Vnet
+  name: 'spoke5-to-spoke1'
+  properties: {
+    remoteVirtualNetwork: {
+      id: spoke1Vnet.id
+    }
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+    allowGatewayTransit: false
+    useRemoteGateways: false
+  }
+}
+
+resource spoke1ToSpoke5Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2023-05-01' = {
+  parent: spoke1Vnet
+  name: 'spoke1-to-spoke5'
   properties: {
     remoteVirtualNetwork: {
       id: spoke5Vnet.id
     }
-    allowHubToRemoteVnetTransit: true
-    allowRemoteVnetToUseHubVnetGateways: true
-    enableInternetSecurity: true
+    allowVirtualNetworkAccess: true
+    allowForwardedTraffic: true
+    allowGatewayTransit: false
+    useRemoteGateways: false
   }
-}
-
-// Outputs
+}// Outputs
 output spoke1ConnectionId string = spoke1Connection.id
 output spoke2ConnectionId string = spoke2Connection.id
-output spoke4ConnectionId string = spoke4Connection.id
-output spoke5ConnectionId string = spoke5Connection.id
+output spoke4PeeringId string = spoke4ToSpoke1Peering.id
+output spoke5PeeringId string = spoke5ToSpoke1Peering.id

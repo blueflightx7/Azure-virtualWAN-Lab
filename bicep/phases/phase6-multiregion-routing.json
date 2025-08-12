@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "16131627242972474386"
+      "templateHash": "17108212584808004834"
     }
   },
   "parameters": {
@@ -35,20 +35,6 @@
       "defaultValue": "[format('vhub-{0}-sea', parameters('environmentPrefix'))]",
       "metadata": {
         "description": "Southeast Asia VWAN Hub name"
-      }
-    },
-    "spoke4VnetName": {
-      "type": "string",
-      "defaultValue": "[format('vnet-spoke4-{0}-wus', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "Spoke 4 VNet name (West US)"
-      }
-    },
-    "spoke5VnetName": {
-      "type": "string",
-      "defaultValue": "[format('vnet-spoke5-{0}-wus', parameters('environmentPrefix'))]",
-      "metadata": {
-        "description": "Spoke 5 VNet name (West US)"
       }
     },
     "azureFirewallPrivateIp": {
@@ -85,8 +71,8 @@
             "destinations": [
               "10.0.0.0/12"
             ],
-            "nextHopType": "IPAddress",
-            "nextHop": "10.0.1.4"
+            "nextHopType": "ResourceId",
+            "nextHop": "[format('{0}/hubVirtualNetworkConnections/vnet-spoke1-{1}-wus-connection', resourceId('Microsoft.Network/virtualHubs', parameters('westUsHubName')), parameters('environmentPrefix'))]"
           }
         ]
       }
@@ -106,8 +92,8 @@
             "destinations": [
               "10.16.0.0/12"
             ],
-            "nextHopType": "IPAddress",
-            "nextHop": "10.16.1.4"
+            "nextHopType": "ResourceId",
+            "nextHop": "[format('{0}/vpnGateways/vpngw-{1}-cus', resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), parameters('environmentPrefix'))]"
           }
         ]
       }
@@ -127,8 +113,8 @@
             "destinations": [
               "10.32.0.0/12"
             ],
-            "nextHopType": "IPAddress",
-            "nextHop": "10.32.1.4"
+            "nextHopType": "ResourceId",
+            "nextHop": "[format('{0}/hubVirtualNetworkConnections/vnet-spoke2-{1}-sea-connection', resourceId('Microsoft.Network/virtualHubs', parameters('southeastAsiaHubName')), parameters('environmentPrefix'))]"
           }
         ]
       }
@@ -204,34 +190,6 @@
         ],
         "disableBgpRoutePropagation": false
       }
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2024-05-01",
-      "name": "[format('{0}/{1}', parameters('spoke4VnetName'), 'VmSubnet')]",
-      "properties": {
-        "addressPrefix": "10.0.2.0/27",
-        "routeTable": {
-          "id": "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke4-rt', parameters('environmentPrefix')))]"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke4-rt', parameters('environmentPrefix')))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/virtualNetworks/subnets",
-      "apiVersion": "2024-05-01",
-      "name": "[format('{0}/{1}', parameters('spoke5VnetName'), 'VmSubnet')]",
-      "properties": {
-        "addressPrefix": "10.0.3.0/27",
-        "routeTable": {
-          "id": "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke5-rt', parameters('environmentPrefix')))]"
-        }
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke5-rt', parameters('environmentPrefix')))]"
-      ]
     }
   ],
   "outputs": {

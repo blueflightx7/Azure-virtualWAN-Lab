@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "471787025572759460"
+      "templateHash": "18181681756516390488"
     }
   },
   "parameters": {
@@ -87,29 +87,59 @@
       }
     },
     {
-      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2023-05-01",
-      "name": "[format('{0}/{1}', parameters('westUsHubName'), format('{0}-connection', parameters('spoke4VnetName')))]",
+      "name": "[format('{0}/{1}', parameters('spoke4VnetName'), 'spoke4-to-spoke1')]",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke1VnetName'))]"
+        },
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('spoke1VnetName'), 'spoke1-to-spoke4')]",
       "properties": {
         "remoteVirtualNetwork": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke4VnetName'))]"
         },
-        "allowHubToRemoteVnetTransit": true,
-        "allowRemoteVnetToUseHubVnetGateways": true,
-        "enableInternetSecurity": true
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false
       }
     },
     {
-      "type": "Microsoft.Network/virtualHubs/hubVirtualNetworkConnections",
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
       "apiVersion": "2023-05-01",
-      "name": "[format('{0}/{1}', parameters('westUsHubName'), format('{0}-connection', parameters('spoke5VnetName')))]",
+      "name": "[format('{0}/{1}', parameters('spoke5VnetName'), 'spoke5-to-spoke1')]",
+      "properties": {
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke1VnetName'))]"
+        },
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}', parameters('spoke1VnetName'), 'spoke1-to-spoke5')]",
       "properties": {
         "remoteVirtualNetwork": {
           "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('spoke5VnetName'))]"
         },
-        "allowHubToRemoteVnetTransit": true,
-        "allowRemoteVnetToUseHubVnetGateways": true,
-        "enableInternetSecurity": true
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": true,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false
       }
     }
   ],
@@ -122,13 +152,13 @@
       "type": "string",
       "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('southeastAsiaHubName'), format('{0}-connection', parameters('spoke2VnetName')))]"
     },
-    "spoke4ConnectionId": {
+    "spoke4PeeringId": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('westUsHubName'), format('{0}-connection', parameters('spoke4VnetName')))]"
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('spoke4VnetName'), 'spoke4-to-spoke1')]"
     },
-    "spoke5ConnectionId": {
+    "spoke5PeeringId": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Network/virtualHubs/hubVirtualNetworkConnections', parameters('westUsHubName'), format('{0}-connection', parameters('spoke5VnetName')))]"
+      "value": "[resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings', parameters('spoke5VnetName'), 'spoke5-to-spoke1')]"
     }
   }
 }

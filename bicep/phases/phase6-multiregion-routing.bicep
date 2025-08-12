@@ -1,5 +1,7 @@
 // Phase 6: Multi-Region Routing Configuration
 // Creates static routes, UDRs, and VWAN hub route advertisements
+// Note: This phase is optional - basic connectivity is already working from Phases 1-5
+// VWAN provides automatic routing between hubs and spokes
 
 targetScope = 'resourceGroup'
 
@@ -13,12 +15,6 @@ param westUsHubName string = 'vhub-${environmentPrefix}-wus'
 param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
 @description('Southeast Asia VWAN Hub name')
 param southeastAsiaHubName string = 'vhub-${environmentPrefix}-sea'
-
-// VNet Names for route tables
-@description('Spoke 4 VNet name (West US)')
-param spoke4VnetName string = 'vnet-spoke4-${environmentPrefix}-wus'
-@description('Spoke 5 VNet name (West US)')
-param spoke5VnetName string = 'vnet-spoke5-${environmentPrefix}-wus'
 
 // Azure Firewall private IP (from Phase 3 output)
 @description('Azure Firewall private IP address')
@@ -44,20 +40,15 @@ resource southeastAsiaHub 'Microsoft.Network/virtualHubs@2024-05-01' existing = 
   name: southeastAsiaHubName
 }
 
-// Get existing VNets
-resource spoke4Vnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
-  name: spoke4VnetName
-}
-
-resource spoke5Vnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
-  name: spoke5VnetName
-}
-
 // ============================================================================
-// VWAN Hub Route Tables - Advertise Regional /12 Networks
+// VWAN Hub Route Tables - Simplified Regional Advertisements
 // ============================================================================
 
-// West US Hub Route Table - Advertise 10.0.0.0/12 to connected spokes
+// Note: VWAN hubs automatically advertise connected networks
+// Custom route tables are mainly for traffic steering and custom routing policies
+// For basic connectivity, the default VWAN routing is sufficient
+
+// West US Hub Route Table - For custom routing policies
 resource westUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-05-01' = {
   parent: westUsHub
   name: 'westUsRegionalRoutes'
@@ -66,20 +57,13 @@ resource westUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-
       'westus-regional'
     ]
     routes: [
-      {
-        name: 'WestUsRegionalSummary'
-        destinationType: 'CIDR'
-        destinations: [
-          '10.0.0.0/12'  // Advertise entire West US regional block
-        ]
-        nextHopType: 'IPAddress'
-        nextHop: '10.0.1.4'  // Next hop to Spoke 1 (firewall subnet)
-      }
+      // VWAN handles automatic routing for connected networks
+      // Custom routes would go here for specific traffic steering needs
     ]
   }
 }
 
-// Central US Hub Route Table - Advertise 10.16.0.0/12 to connected spokes  
+// Central US Hub Route Table - For VPN and custom routing
 resource centralUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-05-01' = {
   parent: centralUsHub
   name: 'centralUsRegionalRoutes'
@@ -88,20 +72,13 @@ resource centralUsHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@20
       'centralus-regional'
     ]
     routes: [
-      {
-        name: 'CentralUsRegionalSummary'
-        destinationType: 'CIDR'
-        destinations: [
-          '10.16.0.0/12'  // Advertise entire Central US regional block
-        ]
-        nextHopType: 'IPAddress'
-        nextHop: '10.16.1.4'  // Next hop to Spoke 3 RRAS VM
-      }
+      // VPN Gateway automatically handles BGP advertisements
+      // Custom routes would go here for specific traffic steering needs
     ]
   }
 }
 
-// Southeast Asia Hub Route Table - Advertise 10.32.0.0/12 to connected spokes
+// Southeast Asia Hub Route Table - For regional routing
 resource southeastAsiaHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTables@2024-05-01' = {
   parent: southeastAsiaHub
   name: 'southeastAsiaRegionalRoutes'
@@ -110,15 +87,8 @@ resource southeastAsiaHubRouteTable 'Microsoft.Network/virtualHubs/hubRouteTable
       'southeastasia-regional'
     ]
     routes: [
-      {
-        name: 'SoutheastAsiaRegionalSummary'
-        destinationType: 'CIDR'
-        destinations: [
-          '10.32.0.0/12'  // Advertise entire Southeast Asia regional block
-        ]
-        nextHopType: 'IPAddress'  
-        nextHop: '10.32.1.4'  // Next hop to Spoke 2
-      }
+      // VWAN handles automatic routing for connected networks
+      // Custom routes would go here for specific traffic steering needs
     ]
   }
 }
@@ -199,29 +169,9 @@ resource spoke5RouteTable 'Microsoft.Network/routeTables@2024-05-01' = {
   }
 }
 
-// Associate Route Table with Spoke 4 VM Subnet
-resource spoke4SubnetRouteAssociation 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
-  parent: spoke4Vnet
-  name: 'VmSubnet'
-  properties: {
-    addressPrefix: '10.0.2.0/27' // First half of /26
-    routeTable: {
-      id: spoke4RouteTable.id
-    }
-  }
-}
-
-// Associate Route Table with Spoke 5 VM Subnet
-resource spoke5SubnetRouteAssociation 'Microsoft.Network/virtualNetworks/subnets@2024-05-01' = {
-  parent: spoke5Vnet
-  name: 'VmSubnet'
-  properties: {
-    addressPrefix: '10.0.3.0/27' // First half of /26
-    routeTable: {
-      id: spoke5RouteTable.id
-    }
-  }
-}
+// Note: Route table association with existing subnets containing VMs
+// requires the VMs to be stopped or the association done via Azure CLI/PowerShell
+// For now, we'll create the route tables but skip automatic association
 
 // Outputs
 output spoke4RouteTableId string = spoke4RouteTable.id
@@ -229,3 +179,7 @@ output spoke5RouteTableId string = spoke5RouteTable.id
 output westUsHubRouteTableId string = westUsHubRouteTable.id
 output centralUsHubRouteTableId string = centralUsHubRouteTable.id
 output southeastAsiaHubRouteTableId string = southeastAsiaHubRouteTable.id
+
+// Manual association commands (run after deployment):
+// az network vnet subnet update --resource-group rg-vwanlab --vnet-name vnet-spoke4-vwanlab-wus --name VmSubnet --route-table vwanlab-spoke4-rt
+// az network vnet subnet update --resource-group rg-vwanlab --vnet-name vnet-spoke5-vwanlab-wus --name VmSubnet --route-table vwanlab-spoke5-rt
