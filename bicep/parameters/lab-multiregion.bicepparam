@@ -45,7 +45,7 @@ param spoke2VnetAddressSpace = '10.32.1.0/26'
 
 // Spoke 3 (Central US) - VPN connection via RRAS
 param spoke3VnetName = 'vnet-spoke3-${environmentPrefix}-cus'
-param spoke3VnetAddressSpace = '10.16.1.0/26'
+param spoke3VnetAddressSpace = '10.48.1.0/25'
 
 // Spoke 4 (West US) - Routes to Spoke 1 Firewall
 param spoke4VnetName = 'vnet-spoke4-${environmentPrefix}-wus'

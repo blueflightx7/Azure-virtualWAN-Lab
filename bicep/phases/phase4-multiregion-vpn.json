@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "9145390204418615675"
+      "templateHash": "4231367157604638297"
     }
   },
   "parameters": {
@@ -39,7 +39,7 @@
     },
     "spoke3AddressSpace": {
       "type": "string",
-      "defaultValue": "10.16.1.0/25",
+      "defaultValue": "10.48.1.0/25",
       "metadata": {
         "description": "Spoke 3 address space for local network gateway"
       }
@@ -59,7 +59,7 @@
   "resources": [
     {
       "type": "Microsoft.Network/vpnGateways",
-      "apiVersion": "2023-05-01",
+      "apiVersion": "2024-05-01",
       "name": "[parameters('vpnGatewayName')]",
       "location": "[parameters('centralUsRegion')]",
       "tags": "[parameters('tags')]",
@@ -76,13 +76,13 @@
     },
     {
       "type": "Microsoft.Network/vpnSites",
-      "apiVersion": "2023-05-01",
+      "apiVersion": "2024-05-01",
       "name": "[format('{0}-spoke3-vpnsite', parameters('environmentPrefix'))]",
       "location": "[parameters('centralUsRegion')]",
       "tags": "[parameters('tags')]",
       "properties": {
         "virtualWan": {
-          "id": "[reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2023-05-01').virtualWan.id]"
+          "id": "[reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2024-05-01').virtualWan.id]"
         },
         "deviceProperties": {
           "deviceVendor": "Microsoft",
@@ -93,11 +93,6 @@
           "addressPrefixes": [
             "[parameters('spoke3AddressSpace')]"
           ]
-        },
-        "bgpProperties": {
-          "asn": 65001,
-          "bgpPeeringAddress": "10.16.1.4",
-          "peerWeight": 0
         },
         "vpnSiteLinks": [
           {
@@ -110,24 +105,21 @@
               },
               "bgpProperties": {
                 "asn": 65001,
-                "bgpPeeringAddress": "10.16.1.4"
+                "bgpPeeringAddress": "10.48.1.4"
               }
             }
           }
-        ],
-        "ipAddress": "1.1.1.1"
+        ]
       }
     },
     {
       "type": "Microsoft.Network/vpnGateways/vpnConnections",
-      "apiVersion": "2023-05-01",
+      "apiVersion": "2024-05-01",
       "name": "[format('{0}/{1}', parameters('vpnGatewayName'), format('{0}-spoke3-vpnconnection', parameters('environmentPrefix')))]",
       "properties": {
         "remoteVpnSite": {
           "id": "[resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix')))]"
         },
-        "connectionBandwidth": 100,
-        "enableBgp": true,
         "routingWeight": 0,
         "vpnConnectionProtocolType": "IKEv2",
         "vpnLinkConnections": [
@@ -167,9 +159,9 @@
       "type": "string",
       "value": "[resourceId('Microsoft.Network/vpnGateways/vpnConnections', parameters('vpnGatewayName'), format('{0}-spoke3-vpnconnection', parameters('environmentPrefix')))]"
     },
-    "sharedKey": {
+    "vpnSiteLinkId": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Network/vpnGateways/vpnConnections', parameters('vpnGatewayName'), format('{0}-spoke3-vpnconnection', parameters('environmentPrefix'))), '2023-05-01').sharedKey]"
+      "value": "[format('{0}/vpnSiteLinks/link1', resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix'))))]"
     }
   }
 }

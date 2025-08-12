@@ -16,7 +16,7 @@ param centralUsHubName string = 'vhub-${environmentPrefix}-cus'
 param vpnGatewayName string = 'vpngw-${environmentPrefix}-cus'
 
 @description('Spoke 3 address space for local network gateway')
-param spoke3AddressSpace string = '10.16.1.0/25'
+param spoke3AddressSpace string = '10.48.1.0/25'
 
 @description('Tags to apply to all resources')
 param tags object = {
@@ -26,12 +26,12 @@ param tags object = {
 }
 
 // Get existing Central US VWAN Hub
-resource centralUsHub 'Microsoft.Network/virtualHubs@2023-05-01' existing = {
+resource centralUsHub 'Microsoft.Network/virtualHubs@2024-05-01' existing = {
   name: centralUsHubName
 }
 
 // Create VPN Gateway in VWAN Hub
-resource vpnGateway 'Microsoft.Network/vpnGateways@2023-05-01' = {
+resource vpnGateway 'Microsoft.Network/vpnGateways@2024-05-01' = {
   name: vpnGatewayName
   location: centralUsRegion
   tags: tags
@@ -48,7 +48,7 @@ resource vpnGateway 'Microsoft.Network/vpnGateways@2023-05-01' = {
 }
 
 // Create VPN Site for Spoke 3 RRAS connection
-resource vpnSite 'Microsoft.Network/vpnSites@2023-05-01' = {
+resource vpnSite 'Microsoft.Network/vpnSites@2024-05-01' = {
   name: '${environmentPrefix}-spoke3-vpnsite'
   location: centralUsRegion
   tags: tags
@@ -66,11 +66,6 @@ resource vpnSite 'Microsoft.Network/vpnSites@2023-05-01' = {
         spoke3AddressSpace
       ]
     }
-    bgpProperties: {
-      asn: 65001
-      bgpPeeringAddress: '10.16.1.4'
-      peerWeight: 0
-    }
     vpnSiteLinks: [
       {
         name: 'link1'
@@ -82,26 +77,23 @@ resource vpnSite 'Microsoft.Network/vpnSites@2023-05-01' = {
           }
           bgpProperties: {
             asn: 65001
-            bgpPeeringAddress: '10.16.1.4'
+            bgpPeeringAddress: '10.48.1.4'
           }
         }
       }
     ]
     // Note: ipAddress will need to be updated with actual RRAS VM public IP after VM deployment
-    ipAddress: '1.1.1.1' // Placeholder - will be updated in deployment script
   }
 }
 
 // Create VPN Connection
-resource vpnConnection 'Microsoft.Network/vpnGateways/vpnConnections@2023-05-01' = {
+resource vpnConnection 'Microsoft.Network/vpnGateways/vpnConnections@2024-05-01' = {
   parent: vpnGateway
   name: '${environmentPrefix}-spoke3-vpnconnection'
   properties: {
     remoteVpnSite: {
       id: vpnSite.id
     }
-    connectionBandwidth: 100
-    enableBgp: true
     routingWeight: 0
     vpnConnectionProtocolType: 'IKEv2'
     vpnLinkConnections: [
@@ -125,4 +117,4 @@ output vpnGatewayId string = vpnGateway.id
 output vpnGatewayName string = vpnGateway.name
 output vpnSiteId string = vpnSite.id
 output vpnConnectionId string = vpnConnection.id
-output sharedKey string = vpnConnection.properties.sharedKey
+output vpnSiteLinkId string = '${vpnSite.id}/vpnSiteLinks/link1'
