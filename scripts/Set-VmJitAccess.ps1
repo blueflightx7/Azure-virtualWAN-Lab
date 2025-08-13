@@ -16,18 +16,31 @@
 .PARAMETER Force
     Skip confirmation prompt
     
+.PARAMETER SfiEnable
+    Enable Secure Future Initiative (SFI) compliance mode
+    
+.PARAMETER RequestAccess
+    Automatically request JIT access for all VMs after creating policies
+    
 .EXAMPLE
     .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-security"
     
 .EXAMPLE
-    .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-security" -Force
+    .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-security" -SfiEnable
+    
+.EXAMPLE
+    .\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-security" -RequestAccess
 #>
 
 param(
     [Parameter(Mandatory = $true)]
     [string]$ResourceGroupName,
     
-    [switch]$Force
+    [switch]$Force,
+    
+    [switch]$SfiEnable,
+    
+    [switch]$RequestAccess
 )
 
 function Write-Header {
@@ -144,7 +157,82 @@ function Request-JitAccess {
         return $true
         
     } catch {
-        Write-Warning "Failed to request JIT access for $VmName`: $($_.Exception.Message)"
+        $errorMessage = $_.Exception.Message
+        if ($_.Exception.Response) {
+            try {
+                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                $responseBody = $reader.ReadToEnd()
+                $reader.Close()
+                
+                # Parse error response for better messaging
+                if ($responseBody -like "*JitNetworkAccessPolicyNotFound*") {
+                    Write-Warning "JIT policy not found for $VmName. Create JIT policy first using the main script."
+                } elseif ($responseBody -like "*already has an active request*") {
+                    Write-Host "  ℹ️ JIT access already active for $VmName" -ForegroundColor Blue
+                    return $true
+                } else {
+                    Write-Warning "Failed to request JIT access for $VmName`: $errorMessage"
+                    Write-Host "  Response: $responseBody" -ForegroundColor Red
+                }
+            } catch {
+                Write-Warning "Failed to request JIT access for $VmName`: $errorMessage"
+            }
+        } else {
+            Write-Warning "Failed to request JIT access for $VmName`: $errorMessage"
+        }
+        return $false
+    }
+}
+
+function Request-JitAccessForAllVms {
+    param(
+        [string]$ResourceGroupName,
+        [string]$SourceIp
+    )
+    
+    Write-Host "`n🔓 Requesting JIT access for all VMs..." -ForegroundColor Yellow
+    
+    try {
+        # Get all VMs in the resource group (flexible pattern matching)
+        $vms = Get-AzVM -ResourceGroupName $ResourceGroupName | Where-Object { 
+            $_.Name -like "*vwanlab*" -or 
+            $_.Name -like "vm-s*" -or 
+            $_.Name -like "*nva*" -or
+            $_.Name -like "*rras*" -or
+            $_.Name -like "*spoke*"
+        }
+        
+        if ($vms.Count -eq 0) {
+            Write-Warning "No VMs found in resource group $ResourceGroupName"
+            return $false
+        }
+        
+        $successCount = 0
+        $totalCount = $vms.Count
+        
+        foreach ($vm in $vms) {
+            $success = Request-JitAccess -ResourceGroupName $ResourceGroupName -VmName $vm.Name -SourceIp $SourceIp -Location $vm.Location
+            if ($success) {
+                $successCount++
+            }
+        }
+        
+        Write-Host "`n✅ JIT access requested for $successCount of $totalCount VMs" -ForegroundColor Green
+        
+        if ($successCount -gt 0) {
+            Write-Host "`n📋 ACCESS GRANTED SUMMARY" -ForegroundColor Yellow
+            Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+            Write-Host "• Access Duration: 24 hours" -ForegroundColor Gray
+            Write-Host "• Allowed Source IP: $SourceIp" -ForegroundColor Gray
+            Write-Host "• Ports Available: RDP (3389), SSH (22)" -ForegroundColor Gray
+            Write-Host "• Access expires automatically after 24 hours" -ForegroundColor Gray
+            Write-Host ""
+        }
+        
+        return $successCount -eq $totalCount
+        
+    } catch {
+        Write-Error "Failed to request JIT access for VMs: $($_.Exception.Message)"
         return $false
     }
 }
@@ -365,14 +453,30 @@ try {
     Write-Host "🔐 Setting up JIT VM Access for Azure VWAN Lab" -ForegroundColor Cyan
     Write-Host "Resource Group: $ResourceGroupName" -ForegroundColor Gray
     Write-Host "SFI Enabled: $($SfiEnable -or $Force)" -ForegroundColor Gray
+    Write-Host "Auto-Request Access: $RequestAccess" -ForegroundColor Gray
+    
+    # Get deployer IP for access requests
+    try {
+        $deployerIp = (Invoke-RestMethod -Uri "https://ipinfo.io/ip" -UseBasicParsing).Trim()
+        Write-Host "Deployer IP: $deployerIp" -ForegroundColor Gray
+    } catch {
+        Write-Warning "Could not detect deployer IP. Access requests will need to be made manually."
+        $deployerIp = "0.0.0.0"
+    }
     
     if ($Force -or $SfiEnable) {
         # First remove permissive NSG rules for SFI compliance
         Remove-PermissiveNsgRules -ResourceGroupName $ResourceGroupName
     }
     
-    # Get all VMs in the resource group
-    $vms = Get-AzVM -ResourceGroupName $ResourceGroupName | Where-Object { $_.Name -like "*vwanlab*" }
+    # Get all VMs in the resource group (flexible pattern matching)
+    $vms = Get-AzVM -ResourceGroupName $ResourceGroupName | Where-Object { 
+        $_.Name -like "*vwanlab*" -or 
+        $_.Name -like "vm-s*" -or 
+        $_.Name -like "*nva*" -or
+        $_.Name -like "*rras*" -or
+        $_.Name -like "*spoke*"
+    }
     
     if ($vms.Count -eq 0) {
         Write-Warning "No VMs found in resource group $ResourceGroupName"
@@ -441,46 +545,65 @@ try {
         }
     }
     
-    # Display access instructions
-    Write-Host "`n📋 JIT ACCESS INSTRUCTIONS" -ForegroundColor Yellow
-    Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Yellow
-    Write-Host ""
-    
-    Write-Host "🔓 TO REQUEST JIT ACCESS:" -ForegroundColor Green
-    Write-Host "Option 1 - Azure Portal:" -ForegroundColor Cyan
-    Write-Host "  1. Go to Azure Security Center > Just-in-time VM access" -ForegroundColor Gray
-    Write-Host "  2. Select the VM you want to access" -ForegroundColor Gray
-    Write-Host "  3. Click 'Request access'" -ForegroundColor Gray
-    Write-Host "  4. Enter your IP address (current: $deployerIp)" -ForegroundColor Gray
-    Write-Host "  5. Set duration (max 24 hours)" -ForegroundColor Gray
-    Write-Host ""
-    
-    Write-Host "Option 2 - PowerShell REST API:" -ForegroundColor Cyan
-    Write-Host "  Run the following command for each VM:" -ForegroundColor Gray
-    Write-Host ""
-    foreach ($vm in $vms) {
-        Write-Host "  # Access $($vm.Name)" -ForegroundColor Yellow
-        Write-Host "  Request-JitAccess -ResourceGroupName '$ResourceGroupName' -VmName '$($vm.Name)' -SourceIp '$deployerIp' -Location '$($vm.Location)'" -ForegroundColor White
-        Write-Host ""
-    }
-    
-    Write-Host "Option 3 - Azure CLI:" -ForegroundColor Cyan
-    Write-Host "  az security jit-policy initiate \\" -ForegroundColor White
-    Write-Host "    --resource-group '$ResourceGroupName' \\" -ForegroundColor White
-    Write-Host "    --vm-name 'VM_NAME' \\" -ForegroundColor White
-    Write-Host "    --vm-ports '[{`"number`":22,`"duration`":`"PT24H`",`"allowedSourceAddressPrefix`":`"$deployerIp/32`"}]'" -ForegroundColor White
-    Write-Host ""
-    
-    Write-Host "� NOTES:" -ForegroundColor Yellow
-    Write-Host "  • JIT access duration: 24 hours maximum" -ForegroundColor Gray
-    Write-Host "  • Access is restricted to your IP: $deployerIp" -ForegroundColor Gray
-    Write-Host "  • RDP (3389) and SSH (22) ports are configured" -ForegroundColor Gray
-    Write-Host "  • Permissive NSG rules have been removed for SFI compliance" -ForegroundColor Gray
-    Write-Host ""
-    
     # Show actual policy count
     $actualCount = Get-ActualJitVmCount -ResourceGroupName $ResourceGroupName
-    Write-Host "✅ Total JIT policies active: $actualCount" -ForegroundColor Green
+    Write-Host "`n✅ Total JIT policies active: $actualCount" -ForegroundColor Green
+    
+    # Auto-request access if requested
+    if ($RequestAccess -and $deployerIp -ne "0.0.0.0") {
+        Write-Host "`n🚀 Auto-requesting JIT access for all VMs..." -ForegroundColor Yellow
+        $accessSuccess = Request-JitAccessForAllVms -ResourceGroupName $ResourceGroupName -SourceIp $deployerIp
+        
+        if ($accessSuccess) {
+            Write-Host "`n🎉 JIT access has been automatically granted!" -ForegroundColor Green
+            Write-Host "You can now connect to your VMs using RDP or SSH." -ForegroundColor Gray
+        } else {
+            Write-Host "`n⚠️ Some access requests failed. Use manual methods below." -ForegroundColor Yellow
+        }
+    }
+    
+    # Display access instructions (unless access was auto-granted successfully)
+    if (-not $RequestAccess -or $deployerIp -eq "0.0.0.0" -or -not $accessSuccess) {
+        Write-Host "`n📋 JIT ACCESS INSTRUCTIONS" -ForegroundColor Yellow
+        Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+        Write-Host ""
+        
+        Write-Host "🔓 TO REQUEST JIT ACCESS:" -ForegroundColor Green
+        Write-Host "Option 1 - Azure Portal:" -ForegroundColor Cyan
+        Write-Host "  1. Go to Azure Security Center > Just-in-time VM access" -ForegroundColor Gray
+        Write-Host "  2. Select the VM you want to access" -ForegroundColor Gray
+        Write-Host "  3. Click 'Request access'" -ForegroundColor Gray
+        Write-Host "  4. Enter your IP address (current: $deployerIp)" -ForegroundColor Gray
+        Write-Host "  5. Set duration (max 24 hours)" -ForegroundColor Gray
+        Write-Host ""
+        
+        Write-Host "Option 2 - PowerShell REST API:" -ForegroundColor Cyan
+        Write-Host "  Run the following command for each VM:" -ForegroundColor Gray
+        Write-Host ""
+        foreach ($vm in $vms) {
+            Write-Host "  # Access $($vm.Name)" -ForegroundColor Yellow
+            Write-Host "  Request-JitAccess -ResourceGroupName '$ResourceGroupName' -VmName '$($vm.Name)' -SourceIp '$deployerIp' -Location '$($vm.Location)'" -ForegroundColor White
+            Write-Host ""
+        }
+        
+        Write-Host "Option 3 - Automated Access Request:" -ForegroundColor Cyan
+        Write-Host "  .\Set-VmJitAccess.ps1 -ResourceGroupName '$ResourceGroupName' -RequestAccess" -ForegroundColor White
+        Write-Host ""
+        
+        Write-Host "Option 4 - Azure CLI:" -ForegroundColor Cyan
+        Write-Host "  az security jit-policy initiate \\" -ForegroundColor White
+        Write-Host "    --resource-group '$ResourceGroupName' \\" -ForegroundColor White
+        Write-Host "    --vm-name 'VM_NAME' \\" -ForegroundColor White
+        Write-Host "    --vm-ports '[{`"number`":22,`"duration`":`"PT24H`",`"allowedSourceAddressPrefix`":`"$deployerIp/32`"}]'" -ForegroundColor White
+        Write-Host ""
+        
+        Write-Host "💡 NOTES:" -ForegroundColor Yellow
+        Write-Host "  • JIT access duration: 24 hours maximum" -ForegroundColor Gray
+        Write-Host "  • Access is restricted to your IP: $deployerIp" -ForegroundColor Gray
+        Write-Host "  • RDP (3389) and SSH (22) ports are configured" -ForegroundColor Gray
+        Write-Host "  • Permissive NSG rules have been removed for SFI compliance" -ForegroundColor Gray
+        Write-Host ""
+    }
     
 } catch {
     Write-Error "Failed to configure JIT access: $($_.Exception.Message)"
