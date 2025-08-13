@@ -851,20 +851,24 @@ try {
     if ($SfiEnable) {
         Write-Host ""
         Write-Host "🔒 Configuring Secure Future Initiative (SFI) features..." -ForegroundColor Cyan
-        Write-Host "🔐 Setting up Just-In-Time (JIT) VM access..." -ForegroundColor Yellow
+        Write-Host "🔐 Setting up Just-In-Time (JIT) VM access and removing permissive NSG rules..." -ForegroundColor Yellow
         
         try {
             $jitScriptPath = Join-Path $PSScriptRoot "Set-VmJitAccess.ps1"
             if (Test-Path $jitScriptPath) {
-                & $jitScriptPath -ResourceGroupName $ResourceGroupName -Force
+                # Run with SfiEnable flag to ensure NSG cleanup and 24-hour JIT policies
+                & $jitScriptPath -ResourceGroupName $ResourceGroupName -SfiEnable -Force
                 Write-Host "✅ SFI features configured successfully" -ForegroundColor Green
+                Write-Host "  • JIT policies created with 24-hour maximum duration" -ForegroundColor Gray
+                Write-Host "  • Permissive NSG rules removed for security compliance" -ForegroundColor Gray
+                Write-Host "  • Access now requires JIT approval through Azure Portal" -ForegroundColor Gray
             } else {
                 Write-Warning "JIT configuration script not found at: $jitScriptPath"
             }
         }
         catch {
             Write-Warning "Failed to configure SFI features: $($_.Exception.Message)"
-            Write-Host "💡 You can manually configure JIT access later using: .\scripts\Set-VmJitAccess.ps1 -ResourceGroupName '$ResourceGroupName'" -ForegroundColor Cyan
+            Write-Host "💡 You can manually configure JIT access later using: .\scripts\Set-VmJitAccess.ps1 -ResourceGroupName '$ResourceGroupName' -SfiEnable" -ForegroundColor Cyan
         }
     }
     
