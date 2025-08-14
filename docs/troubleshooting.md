@@ -1,53 +1,327 @@
-# Azure Virtual WAN Lab - Enhanced Troubleshooting Guide
+# Azure Virtual WAN Lab - Comprehensive Troubleshooting Guide
 
-This comprehensive guide covers all common issues and their solutions encountered during Azure Virtual WAN lab deployment, including the **new unified deployment system** with automated VM configuration and security features.
+This comprehensive guide covers all common issues and their solutions encountered during Azure Virtual WAN lab deployment, including **multi-region architecture**, **Just-In-Time (JIT) access**, **automated security features**, and **enterprise automation tools**.
 
 ## 🆕 **What's New in This Guide**
 
-### ✅ **Enhanced Troubleshooting Coverage**
-- **Unified Deployment System Issues**: Troubleshooting for enhanced Deploy-VwanLab.ps1 script
-- **Automatic VM Configuration Problems**: Solutions for RDP and RRAS setup issues
-- **Credential Validation Issues**: Resolving username and password complexity problems
-- **Security Configuration Issues**: Troubleshooting automatic NSG and firewall setup
-- **Cleanup System Problems**: Solutions for background cleanup and job management
-- **IP Schema Conflicts**: Resolving addressing scheme issues
+### ✅ **Multi-Region Architecture Support**
+- **3-Region VWAN Deployment**: West US, Central US, Southeast Asia
+- **Azure Firewall Premium Integration**: Security hub troubleshooting
+- **VPN Site-to-Site Connectivity**: RRAS and VPN gateway issues
+- **Cross-Region Routing**: Hub-to-hub connectivity problems
+
+### ✅ **Enhanced Security Features (SFI)**
+- **Just-In-Time (JIT) VM Access**: Troubleshooting JIT policy creation and access requests
+- **Auto-Shutdown Configuration**: VM scheduling and cost optimization issues
+- **NSG Security Hardening**: Network security group configuration problems
+- **Microsoft Defender Integration**: Security center and compliance issues
 
 ### ✅ **Automated Diagnostic Tools**
-- **Enhanced Troubleshooting Script**: Advanced diagnostic capabilities
-- **Real-time Monitoring**: Live status checking and issue detection
-- **Automated Recovery**: Self-healing mechanisms for common problems
-- **RRAS Installation Logging**: Detailed logs for NVA configuration troubleshooting
+- **Real-Time Monitoring**: .NET automation suite troubleshooting
+- **BGP Status Checking**: Route Server and VWAN BGP peering issues
+- **Connectivity Testing**: Automated testing and validation problems
+- **Resource Cleanup**: Intelligent cleanup and dependency management
 
 ## Table of Contents
 
-1. [🚀 Unified Deployment System Issues](#-unified-deployment-system-issues) - **NEW**
-2. [🔐 Credential and Security Issues](#-credential-and-security-issues) - **NEW**
-3. [🖥️ Automatic VM Configuration Issues](#️-automatic-vm-configuration-issues) - **NEW**
-4. [🧹 Cleanup System Troubleshooting](#-cleanup-system-troubleshooting) - **ENHANCED**
-5. [🌐 IP Schema and Networking Issues](#-ip-schema-and-networking-issues) - **ENHANCED**
-6. [Prerequisites and Setup Issues](#prerequisites-and-setup-issues)
-7. [Bicep and Azure CLI Issues](#bicep-and-azure-cli-issues) - **UPDATED**
-8. [Template Compilation and Validation Issues](#template-compilation-and-validation-issues) - **ENHANCED**
-9. [Deployment Scope Issues](#deployment-scope-issues)
-10. [Parameter and Path Issues](#parameter-and-path-issues)
-11. [PowerShell Script Issues](#powershell-script-issues) - **ENHANCED**
-12. [Authentication and Permissions](#authentication-and-permissions)
-13. [🤖 Automated Troubleshooting Tools](#-automated-troubleshooting-tools) - **ENHANCED**
+1. [🌐 Multi-Region Deployment Issues](#-multi-region-deployment-issues) - **NEW**
+2. [🔐 JIT Access and Security Issues](#-jit-access-and-security-issues) - **NEW**
+3. [🤖 .NET Automation Suite Issues](#-net-automation-suite-issues) - **NEW**
+4. [🔄 BGP and Routing Issues](#-bgp-and-routing-issues) - **ENHANCED**
+5. [🖥️ VM Configuration Issues](#️-vm-configuration-issues) - **ENHANCED**
+6. [🧹 Resource Management Issues](#-resource-management-issues) - **ENHANCED**
+7. [Prerequisites and Setup Issues](#prerequisites-and-setup-issues)
+8. [Bicep Template Issues](#bicep-template-issues) - **UPDATED**
+9. [PowerShell Script Issues](#powershell-script-issues) - **ENHANCED**
+10. [Authentication and Permissions](#authentication-and-permissions)
+11. [Connectivity and Networking](#connectivity-and-networking) - **ENHANCED**
+12. [🛠️ Automated Troubleshooting Tools](#️-automated-troubleshooting-tools) - **NEW**
 
 ---
 
-## 🚀 **Unified Deployment System Issues**
+## 🌐 **Multi-Region Deployment Issues**
 
-### Issue: Enhanced Deploy-VwanLab.ps1 Script Issues
+### Issue: Multi-Region Script Not Found
 **Symptoms:**
-- Script fails during credential collection
-- Automatic RDP configuration not working
-- RRAS installation fails
+- `Deploy-VwanLab-MultiRegion.ps1` not found
+- Multi-region parameter files missing
 
 **Solution:**
 ```powershell
-# Verify script exists and has latest enhancements
-Test-Path ".\scripts\Deploy-VwanLab.ps1"
+# Verify multi-region script exists
+Test-Path ".\scripts\Deploy-VwanLab-MultiRegion.ps1"
+
+# Use enhanced deployment script instead
+.\scripts\Deploy-VwanLab-Enhanced.ps1 -ResourceGroupName "rg-vwanlab-mr" -MultiRegion
+
+# OR use phased deployment
+.\scripts\Deploy-VwanLab-Phased.ps1 -ResourceGroupName "rg-vwanlab-mr"
+```
+
+### Issue: Azure Firewall Premium Deployment Fails
+**Symptoms:**
+- Firewall policy creation errors
+- Premium features not available
+- High cost warnings
+
+**Solution:**
+```powershell
+# Check firewall availability in region
+az provider show --namespace Microsoft.Network --query "resourceTypes[?resourceType=='azureFirewalls'].locations" -o table
+
+# Verify SKU availability
+az vm list-skus --location "westus" --resource-type "azureFirewalls" --query "[].name" -o table
+
+# Use Standard firewall for testing
+.\scripts\Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-test" -FirewallSku "Standard"
+```
+
+### Issue: Cross-Region Connectivity Problems
+**Symptoms:**
+- Hub-to-hub connections failing
+- Cross-region routing not working
+- VPN tunnel establishment issues
+
+**Solution:**
+```powershell
+# Check hub connectivity status
+az network vhub connection list --vhub-name "vhub-vwanlab-wus" --resource-group "rg-vwanlab-mr"
+
+# Validate cross-region routing
+.\scripts\Test-Connectivity.ps1 -ResourceGroupName "rg-vwanlab-mr" -CrossRegion
+
+# Check BGP peering across hubs
+.\scripts\Get-BgpStatus.ps1 -ResourceGroupName "rg-vwanlab-mr" -MultiRegion
+```
+
+---
+
+## 🔐 **JIT Access and Security Issues**
+
+### Issue: JIT Access Script Not Working
+**Symptoms:**
+- `Set-VmJitAccess.ps1` fails to find VMs
+- JIT policies not created
+- Access requests timing out
+
+**Solution:**
+```powershell
+# Check if VMs exist and are running
+az vm list -g "rg-vwanlab-demo" --query "[].{Name:name, PowerState:powerState}" -o table
+
+# Run JIT script with correct parameters
+.\scripts\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -SfiEnable
+
+# Request access for all VMs
+.\scripts\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -RequestAccess
+
+# Check JIT policy status
+az security jit-policy list --resource-group "rg-vwanlab-demo"
+```
+
+### Issue: Microsoft Defender for Cloud Not Available
+**Symptoms:**
+- JIT policy creation fails with defender errors
+- Security center not configured
+- Fallback NSG rules not working
+
+**Solution:**
+```powershell
+# Check Defender for Cloud status
+az security auto-provisioning-setting list
+
+# Enable Microsoft Defender if needed
+az security auto-provisioning-setting update --name "default" --auto-provision "On"
+
+# Use NSG fallback mode
+.\scripts\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -Force
+
+# Test SFI display
+.\scripts\test-sfi-display.ps1 -ResourceGroupName "rg-vwanlab-demo"
+```
+
+### Issue: IP Address Detection Fails
+**Symptoms:**
+- Deployer IP detection returns 0.0.0.0
+- JIT access requests fail with IP errors
+- NSG rules not created properly
+
+**Solution:**
+```powershell
+# Manually detect your public IP
+$myIp = (Invoke-RestMethod -Uri "https://ipinfo.io/ip").Trim()
+Write-Host "Your public IP: $myIp"
+
+# Configure JIT with manual IP
+.\scripts\Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -SourceIp $myIp -RequestAccess
+
+# Verify NSG rules
+az network nsg rule list --nsg-name "nsg-spoke1" --resource-group "rg-vwanlab-demo"
+```
+
+---
+
+## 🤖 **.NET Automation Suite Issues**
+
+### Issue: .NET Application Won't Build
+**Symptoms:**
+- Build errors in VwanLabAutomation project
+- Missing dependencies
+- Runtime errors
+
+**Solution:**
+```bash
+# Verify .NET 8 SDK is installed
+dotnet --version
+
+# Restore packages
+cd src/VwanLabAutomation
+dotnet restore
+
+# Clean and rebuild
+dotnet clean
+dotnet build
+
+# Run with verbose output
+dotnet run -- status --resource-group "rg-vwanlab-demo" --verbose
+```
+
+### Issue: Automation Tools Can't Find Resources
+**Symptoms:**
+- "No resources found" errors
+- Authentication failures
+- Subscription access issues
+
+**Solution:**
+```bash
+# Check Azure authentication
+az account show
+
+# Set correct subscription
+az account set --subscription "your-subscription-id"
+
+# Run automation with debug output
+dotnet run --project ./src/VwanLabAutomation/ -- status --resource-group "rg-vwanlab-demo" --debug
+
+# Check application settings
+cat ./src/VwanLabAutomation/appsettings.json
+```
+
+---
+
+## 🔄 **BGP and Routing Issues**
+
+### Issue: BGP Peering Not Established
+**Symptoms:**
+- BGP neighbors in idle state
+- Routes not being advertised
+- RRAS service not running
+
+**Solution:**
+```powershell
+# Check RRAS service status
+.\scripts\Validate-RrasConfiguration.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Fix RRAS service if needed
+.\scripts\Fix-RrasService.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Check BGP status
+.\scripts\Get-BgpStatus.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Reconfigure BGP peering
+.\scripts\Configure-NvaBgp.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Simple BGP configuration for testing
+.\scripts\configure-bgp-simple.ps1 -ResourceGroupName "rg-vwanlab-demo"
+```
+
+### Issue: Route Server Integration Problems
+**Symptoms:**
+- Route Server not learning routes
+- Peering connections failing
+- Routes not propagating to VWAN
+
+**Solution:**
+```powershell
+# Check Route Server status
+az network routeserver list --resource-group "rg-vwanlab-demo"
+
+# Validate BGP architecture
+.\scripts\Check-VwanBgpArchitecture.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Check learned routes
+az network routeserver peering list-learned-routes --name "bgp-nva" --routeserver "rs-spoke3" --resource-group "rg-vwanlab-demo"
+
+# Reset Route Server peering
+az network routeserver peering delete --name "bgp-nva" --routeserver "rs-spoke3" --resource-group "rg-vwanlab-demo"
+.\scripts\Configure-NvaBgp.ps1 -ResourceGroupName "rg-vwanlab-demo"
+```
+
+---
+
+## 🖥️ **VM Configuration Issues**
+
+### Issue: VMs Not Found by Scripts
+**Symptoms:**
+- "No VMs found" errors
+- Scripts can't detect lab VMs
+- VM pattern matching fails
+
+**Solution:**
+The scripts now use flexible VM pattern matching. If you still get "No VMs found" errors:
+
+```powershell
+# Check what VMs exist
+az vm list --resource-group "rg-vwanlab-demo" --query "[].{Name:name, Location:location, PowerState:powerState}" --output table
+
+# The scripts now automatically detect VMs with these patterns:
+# - *vwanlab* (original pattern)
+# - vm-s* (new multi-region pattern)
+# - *nva* (NVA VMs)
+# - *rras* (RRAS VMs)
+# - *spoke* (spoke VMs)
+
+# If your VMs use different naming, update the script pattern
+```
+
+### Issue: Auto-Shutdown Not Working
+**Symptoms:**
+- VMs not shutting down automatically
+- Auto-shutdown configuration fails
+- Schedule not working
+
+**Solution:**
+```powershell
+# Configure auto-shutdown
+.\scripts\Set-VmAutoShutdown.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Set custom shutdown time
+.\scripts\Set-VmAutoShutdown.ps1 -ResourceGroupName "rg-vwanlab-demo" -AutoShutdownTime "18:00"
+
+# Test auto-shutdown configuration
+.\scripts\test-autoshutdown.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Check auto-shutdown status via Azure CLI
+az vm auto-shutdown show --resource-group "rg-vwanlab-demo" --vm-name "vm-s1-win-wus"
+```
+
+### Issue: Boot Diagnostics Problems
+**Symptoms:**
+- Can't access VM console
+- Boot diagnostics not enabled
+- Troubleshooting data missing
+
+**Solution:**
+```powershell
+# Enable boot diagnostics for all VMs
+.\scripts\Enable-BootDiagnostics.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Check boot diagnostics status
+az vm boot-diagnostics get-boot-log --name "vm-s1-win-wus" --resource-group "rg-vwanlab-demo"
+
+# View screenshot
+az vm boot-diagnostics get-boot-log-uris --name "vm-s1-win-wus" --resource-group "rg-vwanlab-demo"
+```
 
 # Check script version (should include new functions)
 Get-Content ".\scripts\Deploy-VwanLab.ps1" | Select-String "Test-PasswordComplexity|Get-UserCredentials|Enable-VmRdpAccess"
@@ -697,69 +971,175 @@ if ($null -eq $context) {
 
 # For Azure CLI
 az login
+---
+
+## 🧹 **Resource Management Issues**
+
+### Issue: Resource Cleanup Problems
+**Symptoms:**
+- Resources not cleaning up properly
+- Dependent resources preventing deletion
+- Cleanup scripts failing
+
+**Solution:**
+```powershell
+# Use intelligent cleanup with dependency management
+.\scripts\Cleanup-ResourceGroups.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Use .NET automation for advanced cleanup
+dotnet run --project .\src\VwanLabAutomation\ -- cleanup --resource-group "rg-vwanlab-demo"
+
+# Manual cleanup with force delete
+az group delete --name "rg-vwanlab-demo" --yes --no-wait
+
+# Check cleanup status
+.\scripts\Get-LabStatus.ps1 -ResourceGroupName "rg-vwanlab-demo"
 ```
 
-### Issue: Resource Group Not Found
+### Issue: Legacy Script Problems
+**Symptoms:**
+- Old script names not found
+- Deprecated parameter errors
+- Legacy cleanup issues
+
 **Solution:**
-Create resource group if it doesn't exist:
 ```powershell
-$rg = Get-AzResourceGroup -Name $ResourceGroupName -ErrorAction SilentlyContinue
-if (-not $rg) {
-    New-AzResourceGroup -Name $ResourceGroupName -Location $Location
-}
+# Use updated scripts instead of legacy ones
+# OLD: Manage-Cleanup.ps1
+# NEW: Cleanup-ResourceGroups.ps1
+
+# OLD: Manage-Cleanup-Legacy.ps1  
+# NEW: .\scripts\Cleanup-ResourceGroups.ps1
+
+# Check available scripts
+Get-ChildItem .\scripts\ -Name "*.ps1" | Sort-Object
+```
+
+---
+
+## 🛠️ **Automated Troubleshooting Tools**
+
+### Comprehensive Troubleshooting Script
+```powershell
+# Run comprehensive troubleshooting
+.\scripts\Troubleshoot-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Get detailed lab status
+.\scripts\Get-LabStatus.ps1 -ResourceGroupName "rg-vwanlab-demo" -Detailed
+
+# Check BGP architecture and status
+.\scripts\Check-VwanBgpArchitecture.ps1 -ResourceGroupName "rg-vwanlab-demo"
+```
+
+### .NET Automation Suite Diagnostics
+```bash
+# Real-time monitoring dashboard
+dotnet run --project .\src\VwanLabAutomation\ -- monitor --resource-group "rg-vwanlab-demo"
+
+# Comprehensive status report
+dotnet run --project .\src\VwanLabAutomation\ -- status --resource-group "rg-vwanlab-demo"
+
+# Automated testing suite
+dotnet run --project .\src\VwanLabAutomation\ -- test --resource-group "rg-vwanlab-demo"
+```
+
+### Network Connectivity Testing
+```powershell
+# Test connectivity between spokes
+.\scripts\Test-Connectivity.ps1 -ResourceGroupName "rg-vwanlab-demo" -Detailed
+
+# Test cross-region connectivity (multi-region labs)
+.\scripts\Test-Connectivity.ps1 -ResourceGroupName "rg-vwanlab-mr" -CrossRegion
+
+# Test VPN connectivity
+.\scripts\Test-Connectivity.ps1 -ResourceGroupName "rg-vwanlab-demo" -VpnTest
+```
+
+### Security and Access Validation
+```powershell
+# Display SFI security status
+.\scripts\test-sfi-display.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Validate RRAS configuration
+.\scripts\Validate-RrasConfiguration.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Check auto-shutdown configuration
+.\scripts\test-autoshutdown.ps1 -ResourceGroupName "rg-vwanlab-demo"
 ```
 
 ## Common Error Messages and Solutions
 
 | Error Message | Issue | Solution |
 |---------------|-------|----------|
+| `No VMs found in resource group` | VM pattern matching fails | Use updated scripts with flexible VM detection |
+| `JIT policy creation failed` | Microsoft Defender not available | Use `-Force` parameter for NSG fallback |
+| `BGP peering not established` | RRAS service issues | Run `Fix-RrasService.ps1` |
 | `Bicep CLI not found` | Bicep not installed | Run `az bicep install` |
-| `InvalidCIDRNotation` | Invalid subnet addressing | Fix subnet calculation logic |
-| `parameter was defined multiple times` | WhatIf parameter conflict | Remove explicit WhatIf parameter |
-| `resources must be deployed at resource group scope` | Wrong deployment scope | Change targetScope to 'resourceGroup' |
-| `Cannot find path` | Incorrect file paths | Fix path conversion logic |
-| `NestedDeploymentShortCircuited` | Validation warning | Normal for complex templates, not an error |
+| `Cannot request JIT access` | IP detection fails | Manually specify `-SourceIp` parameter |
+| `Auto-shutdown not configured` | VM scheduling issues | Run `Set-VmAutoShutdown.ps1` |
+| `Cross-region connectivity fails` | Hub routing problems | Check VWAN route tables |
+| `.NET automation fails` | Authentication issues | Check `az account show` |
 
-## Best Practices
+## Quick Diagnostic Commands
 
-1. **Always validate templates before deployment:**
-   ```bash
-   az deployment group validate --resource-group "rg-name" --template-file "template.json"
-   ```
+### Immediate Health Check
+```powershell
+# Quick status check
+az vm list -d -g "rg-vwanlab-demo" --query "[].{Name:name, PowerState:powerState, Location:location}" -o table
 
-2. **Use proper CIDR subnetting** with aligned network addresses.
+# Check resource group contents
+az resource list -g "rg-vwanlab-demo" --query "[].{Name:name, Type:type, Location:location}" -o table
 
-3. **Implement robust error handling** in PowerShell scripts.
+# Verify VWAN hub status
+az network vhub list -g "rg-vwanlab-demo" --query "[].{Name:name, ProvisioningState:provisioningState}" -o table
+```
 
-4. **Use ARM template fallbacks** when Bicep is not available.
+### Network Validation
+```powershell
+# Check NSG rules
+az network nsg list -g "rg-vwanlab-demo" --query "[].{Name:name, Rules:length(securityRules)}" -o table
 
-5. **Test with What-If analysis** before actual deployment:
-   ```bash
-   az deployment group create --what-if --resource-group "rg-name" --template-file "template.json"
-   ```
+# Validate BGP peering
+az network routeserver peering list --routeserver "rs-spoke3" -g "rg-vwanlab-demo" --query "[].{Name:name, PeerAsn:peerAsn, PeeringState:peeringState}" -o table
 
-## Troubleshooting Checklist
+# Check JIT policies
+az security jit-policy list -g "rg-vwanlab-demo" --query "[].{Name:name, VMs:length(virtualMachines)}" -o table
+```
 
-- [ ] Azure CLI installed and logged in
-- [ ] Bicep CLI installed and working
-- [ ] PowerShell modules (Az.Accounts, Az.Resources, Az.Network) installed
-- [ ] Resource group exists
-- [ ] Template scope set to 'resourceGroup'
-- [ ] Subnet CIDR notation is valid
-- [ ] Parameter files don't contain invalid parameters
-- [ ] Path conversion logic is working
-- [ ] Template validation passes
+## Best Practices for Troubleshooting
 
-## Getting Help
+### 💡 **Systematic Approach**
+1. **Start with health check**: Run `Get-LabStatus.ps1` first
+2. **Use verbose output**: Add `-Verbose` to PowerShell commands
+3. **Check Azure activity logs**: Review recent operations in Azure Portal
+4. **Test incrementally**: Isolate issues by testing individual components
 
-If you encounter issues not covered in this guide:
+### 🔧 **Prevention Strategies**
+1. **Use phased deployment**: Avoid timeouts with `Deploy-VwanLab-Phased.ps1`
+2. **Enable boot diagnostics**: Always run `Enable-BootDiagnostics.ps1`
+3. **Configure auto-shutdown**: Save costs with `Set-VmAutoShutdown.ps1`
+4. **Regular monitoring**: Use .NET automation suite for continuous monitoring
 
-1. **Check Azure Activity Log** for detailed error messages
-2. **Use verbose output** with Azure CLI commands
-3. **Review deployment logs** in Azure Portal
-4. **Run the automated troubleshooting script** (see next section)
+### 📊 **Documentation and Logging**
+1. **Save deployment logs**: Keep PowerShell transcripts of deployments
+2. **Document customizations**: Record any parameter changes
+3. **Monitor costs**: Regular review of Azure Cost Management
+4. **Update regularly**: Keep scripts and templates current
 
-For additional support, refer to:
-- [Azure Bicep Documentation](https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/)
+## Getting Advanced Help
+
+### For Complex Issues
+1. **Check detailed logs**: Review Azure Activity Log and deployment history
+2. **Use diagnostic tools**: Run comprehensive troubleshooting scripts
+3. **Contact support**: Create Azure support tickets for platform issues
+4. **Community support**: Use GitHub Issues for project-specific problems
+
+### Additional Resources
 - [Azure Virtual WAN Documentation](https://docs.microsoft.com/en-us/azure/virtual-wan/)
-- [Azure CLI Documentation](https://docs.microsoft.com/en-us/cli/azure/)
+- [Azure Route Server Documentation](https://docs.microsoft.com/en-us/azure/route-server/)
+- [Azure Firewall Documentation](https://docs.microsoft.com/en-us/azure/firewall/)
+- [Microsoft Defender for Cloud Documentation](https://docs.microsoft.com/en-us/azure/defender-for-cloud/)
+
+---
+
+*For additional support, check our [User Guide](user-guide.md) or create an issue on [GitHub](https://github.com/Azure-VWAN-Lab/Azure-VWAN-Lab/issues).*

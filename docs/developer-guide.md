@@ -21,12 +21,14 @@
 - [🔧 Development Environment](#-development-environment)
 - [📝 Infrastructure as Code](#-infrastructure-as-code)
 - [⚙️ Automation & Scripting](#️-automation--scripting)
-- [🔀 Build & Deployment Pipeline](#-build--deployment-pipeline)
+- [� Security Implementation](#-security-implementation) - **NEW**
+- [🤖 .NET Automation Suite](#-net-automation-suite) - **NEW**
+- [🌐 Multi-Region Architecture](#-multi-region-architecture) - **NEW**
+- [�🔀 Build & Deployment Pipeline](#-build--deployment-pipeline)
 - [🧪 Testing Strategy](#-testing-strategy)
 - [🐛 Debugging & Troubleshooting](#-debugging--troubleshooting)
 - [🚀 Extending the Project](#-extending-the-project)
 - [📊 Performance Considerations](#-performance-considerations)
-- [🔒 Security Best Practices](#-security-best-practices)
 - [📈 Monitoring & Observability](#-monitoring--observability)
 
 ---
@@ -40,14 +42,51 @@ This project was built following modern DevOps and Infrastructure as Code princi
 #### **1. Modularity & Reusability**
 ```
 bicep/
-├── main.bicep                 # Orchestration template
+├── main.bicep                      # Orchestration template
 ├── modules/
-│   ├── vwan.bicep            # Self-contained VWAN module
+│   ├── vwan.bicep                 # Self-contained VWAN module
 │   ├── spoke-vnet-with-nva.bicep  # Complex networking with BGP
 │   ├── spoke-vnet-direct.bicep    # Simple spoke implementation
+│   ├── spoke-vnet-multisubnet.bicep # Multi-subnet spoke design
+│   ├── vm-*.bicep                 # VM deployment modules
 │   └── vwan-connections.bicep     # Connection orchestration
+├── phases/
+│   ├── phase1-*.bicep             # Infrastructure deployment
+│   ├── phase2-*.bicep             # VM deployment
+│   ├── phase3-*.bicep             # Service deployment
+│   ├── phase4-*.bicep             # Connectivity deployment
+│   ├── phase5-*.bicep             # BGP and routing
+│   └── phase6-*.bicep             # Final configuration
 └── parameters/
-    └── lab.bicepparam        # Environment-specific configuration
+    ├── lab.bicepparam             # Classic lab configuration
+    ├── lab-multiregion.bicepparam # Multi-region configuration
+    └── lab-phase*.bicepparam      # Phase-specific parameters
+```
+
+#### **2. Security-First Design (SFI - Secure Future Initiative)**
+```
+Security Architecture:
+├── Just-In-Time (JIT) VM Access
+│   ├── Microsoft Defender for Cloud integration
+│   ├── REST API automation
+│   └── NSG fallback security
+├── Automated IP Detection
+├── Auto-Shutdown Scheduling
+└── Network Security Hardening
+```
+
+#### **3. Multi-Architecture Support**
+```
+Deployment Options:
+├── Classic Architecture (v1.0)
+│   ├── Single VWAN hub
+│   ├── Route Server integration
+│   └── BGP peering scenarios
+└── Multi-Region Architecture (v2.0)
+    ├── 3 VWAN hubs (West US, Central US, Southeast Asia)
+    ├── Azure Firewall Premium
+    ├── Cross-region connectivity
+    └── VPN Site-to-Site integration
 ```
 
 #### **2. Multi-Tool Ecosystem**
@@ -432,11 +471,169 @@ graph TD
 
 ---
 
-## 📝 Infrastructure as Code
+## � Script Architecture & Automation
+
+### **📋 PowerShell Script Ecosystem**
+
+The project includes a comprehensive set of PowerShell scripts organized by function and complexity. All scripts support the current multi-region architecture and flexible VM naming patterns.
+
+#### **🎯 Core Deployment Scripts**
+
+| Script | Purpose | Architecture Support | Key Features |
+|--------|---------|---------------------|--------------|
+| **Deploy-VwanLab.ps1** | Main deployment orchestrator | Classic & Multi-Region | 6-phase deployment, auto-RDP, SFI support |
+| **Deploy-VwanLab-MultiRegion.ps1** | Multi-region specialized | Multi-Region Only | 3-hub deployment, cross-region connectivity |
+| **Deploy-VwanLab-Phased.ps1** | Legacy phased deployment | Classic Only | 5-phase classic architecture |
+
+#### **⚡ Quick Deployment Examples**
+
+```powershell
+# Deploy multi-region with SFI and auto-shutdown
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-demo" -SfiEnable -EnableAutoShutdown
+
+# Deploy specific phase with custom parameters
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-test" -Phase 3
+
+# Deploy with what-if analysis
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-demo" -WhatIf
+```
+
+#### **🔒 Security & Management Scripts**
+
+| Script | Purpose | VM Pattern Support | Integration |
+|--------|---------|-------------------|-------------|
+| **Set-VmJitAccess.ps1** | Just-In-Time VM access | vm-s*, *vwanlab*, *nva*, *rras*, *spoke* | REST API automation, 24h policies |
+| **Set-VmAutoShutdown.ps1** | Automated VM shutdown | All patterns | Cost optimization, policy enforcement |
+| **Fix-RrasService.ps1** | RRAS service repair | RRAS VMs | BGP troubleshooting automation |
+
+**Enhanced JIT Access Example:**
+```powershell
+# Configure JIT access for all VMs with 24-hour policies
+./scripts/Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -VerboseLogging
+
+# Request immediate access for all VMs via REST API
+./scripts/Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -RequestAccess
+```
+
+#### **🔍 Diagnostic & Monitoring Scripts**
+
+| Script | Purpose | Output Format | Use Case |
+|--------|---------|---------------|----------|
+| **Check-VwanBgpArchitecture.ps1** | BGP architecture validation | Structured report | Pre-deployment validation |
+| **Get-BgpStatus.ps1** | BGP peering status | Detailed status table | Troubleshooting connectivity |
+| **Test-Connectivity.ps1** | End-to-end connectivity | Pass/fail with details | Post-deployment verification |
+| **Get-LabStatus.ps1** | Overall lab health | Comprehensive dashboard | Operations monitoring |
+
+#### **🏗️ Configuration Scripts**
+
+| Script | Purpose | Automation Level | Dependencies |
+|--------|---------|------------------|--------------|
+| **Configure-NvaBgp.ps1** | BGP peering setup | Fully automated | VM deployment complete |
+| **Configure-NvaVm.ps1** | NVA VM configuration | Semi-automated | PowerShell remoting |
+| **Validate-RrasConfiguration.ps1** | RRAS validation | Diagnostic only | RRAS service running |
+
+#### **🧹 Cleanup & Maintenance Scripts**
+
+| Script | Purpose | Safety Level | Scope |
+|--------|---------|--------------|-------|
+| **Cleanup-ResourceGroups.ps1** | Resource group cleanup | Interactive prompts | Multiple RGs |
+| **Manage-Cleanup.ps1** | Selective resource cleanup | Confirmation required | Targeted resources |
+
+### **🔄 Script Integration Patterns**
+
+#### **Deployment Orchestration Flow**
+
+```mermaid
+graph TD
+    A[Deploy-VwanLab.ps1] --> B[Phase 1: Core Infrastructure]
+    B --> C[Phase 2: Virtual Machines]
+    C --> D[Phase 3: Azure Firewall]
+    D --> E[Phase 4: VPN Gateway]
+    E --> F[Phase 5: VWAN Connections]
+    F --> G[Phase 6: Route Tables]
+    
+    G --> H[Configure-NvaBgp.ps1]
+    H --> I[Set-VmJitAccess.ps1]
+    I --> J[Test-Connectivity.ps1]
+    
+    style A fill:#e1f5fe
+    style G fill:#f3e5f5
+    style J fill:#e8f5e8
+```
+
+#### **Error Handling Strategy**
+
+```powershell
+# Standard error handling pattern used across all scripts
+try {
+    Write-Host "Starting operation..." -ForegroundColor Yellow
+    
+    # Operation logic here
+    $result = Invoke-SomeOperation
+    
+    Write-Host "✅ Operation completed successfully" -ForegroundColor Green
+    return $result
+}
+catch {
+    Write-Error "❌ Operation failed: $($_.Exception.Message)"
+    Write-Host "🔍 Troubleshooting: Check logs for details" -ForegroundColor Cyan
+    throw
+}
+finally {
+    Write-Host "🧹 Cleaning up temporary resources..." -ForegroundColor Gray
+}
+```
+
+### **⚙️ .NET Automation Suite**
+
+#### **VwanLabAutomation Console Application**
+
+Located in `src/VwanLabAutomation/`, this C# application provides enterprise-grade lab management:
+
+```bash
+# Build the automation suite
+dotnet build ./src/VwanLabAutomation/VwanLabAutomation.csproj
+
+# Get comprehensive lab status
+dotnet run --project ./src/VwanLabAutomation -- status --subscription <sub-id> --resource-group <rg-name>
+
+# Perform intelligent cleanup
+dotnet run --project ./src/VwanLabAutomation -- cleanup --subscription <sub-id> --resource-group <rg-name>
+```
+
+**Key Features:**
+- **Intelligent Resource Discovery**: Identifies VWAN lab resources automatically
+- **Dependency-Aware Cleanup**: Removes resources in correct order
+- **Cost Analysis**: Provides cost breakdown and optimization recommendations
+- **Health Monitoring**: Comprehensive lab health diagnostics
+
+---
+
+## �📝 Infrastructure as Code
 
 ### **🎯 Bicep Design Patterns**
 
-#### **1. Modular Architecture**
+#### **1. Phased Deployment Architecture**
+
+The project uses a phased deployment approach to prevent Azure timeout issues and enable granular control:
+
+```
+bicep/phases/
+├── phase1-core.bicep          # Core infrastructure (VWAN, VNets, NSGs)
+├── phase2-vms.bicep           # Virtual machines and compute resources
+├── phase3-firewall.bicep      # Azure Firewall Premium (multi-region)
+├── phase4-vpngateway.bicep    # VPN Gateway for BGP testing
+├── phase5-connections.bicep   # VWAN connections and VNet peerings
+└── phase6-routing.bicep       # Route tables and traffic steering
+```
+
+**Deployment Benefits:**
+- **Timeout Prevention**: Large deployments split into manageable phases
+- **Dependency Management**: Each phase completes before next begins
+- **Selective Deployment**: Deploy only specific phases when needed
+- **Error Isolation**: Issues contained to specific infrastructure layers
+
+#### **2. Modular Component Design**
 
 ```bicep
 // Main template orchestrates modules
@@ -450,15 +647,25 @@ module vwan 'modules/vwan.bicep' = {
     tags: tags
   }
 }
+
+// VM modules with flexible naming support
+module nvaVm 'modules/vm-nva.bicep' = {
+  name: 'nva-vm-deployment'
+  params: {
+    vmName: 'vm-s1-nva-${environmentPrefix}'  // Current naming pattern
+    vmSize: vmSize
+    adminUsername: adminUsername
+    adminPassword: adminPassword
+  }
+}
 ```
 
-**Benefits:**
-- **Reusability**: Modules can be used in different contexts
-- **Maintainability**: Changes isolated to specific components
-- **Testing**: Individual modules can be validated separately
-- **Collaboration**: Teams can work on different modules independently
+**Module Categories:**
+- **Core Infrastructure**: `vwan.bicep`, `spoke-vnet-*.bicep`
+- **Compute Resources**: `vm-*.bicep` (Windows, Linux, NVA variants)
+- **Connectivity**: `vnet-peering.bicep`, `vwan-connections.bicep`
 
-#### **2. Parameter Management**
+#### **3. Parameter Management**
 
 ```bicep
 // Parameter file structure (lab.bicepparam)
@@ -469,6 +676,25 @@ param primaryRegion = 'East US'
 param adminUsername = 'azureuser'
 param adminPassword = readEnvironmentVariable('ADMIN_PASSWORD', 'SecureP@ssw0rd123!')
 param vmSize = 'Standard_D2s_v3'
+
+// Multi-region parameter structure
+param regions = {
+  westUS: {
+    name: 'West US'
+    addressPrefix: '10.0.0.0/12'    // Regional summary block
+    hubAddressPrefix: '10.200.0.0/24'
+  }
+  centralUS: {
+    name: 'Central US'
+    addressPrefix: '10.201.0.0/24'
+    hasVpnGateway: true
+  }
+  southeastAsia: {
+    name: 'Southeast Asia'
+    addressPrefix: '10.202.0.0/24'
+    spoke2AddressPrefix: '10.32.1.0/26'
+  }
+}
 ```
 
 **Parameter Design Principles:**
@@ -777,92 +1003,158 @@ function Test-DeploymentSuccess {
 
 ### **🔍 Test Categories**
 
-#### **1. Unit Tests (Template Validation)**
+#### **1. Template Validation (Bicep)**
 
 ```powershell
-# Test individual Bicep modules
-Describe "Bicep Module Tests" {
-    Context "VWAN Module" {
-        It "Should compile without errors" {
-            { az bicep build --file "bicep/modules/vwan.bicep" } | Should -Not -Throw
+# Validate individual phases
+foreach ($phase in 1..6) {
+    Write-Host "Validating Phase $phase..." -ForegroundColor Yellow
+    
+    $templatePath = "./bicep/phases/phase$phase-*.bicep"
+    $template = Get-ChildItem $templatePath
+    
+    if ($template) {
+        az bicep build --file $template.FullName
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ Phase $phase template valid" -ForegroundColor Green
+        } else {
+            Write-Error "❌ Phase $phase template has errors"
         }
+    }
+}
+```
+
+#### **2. Pre-Deployment Validation**
+
+```powershell
+# Test deployment with what-if analysis
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-test-validation" -WhatIf
+
+# Validate specific phase only
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-test-validation" -Phase 1 -WhatIf
+```
+
+#### **3. Post-Deployment Testing**
+
+```powershell
+# Comprehensive connectivity testing
+./scripts/Test-Connectivity.ps1 -ResourceGroupName "rg-vwanlab-test" -Detailed
+
+# BGP architecture validation
+./scripts/Check-VwanBgpArchitecture.ps1 -ResourceGroupName "rg-vwanlab-test"
+
+# VM accessibility verification (JIT/RDP)
+./scripts/Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-test" -RequestAccess
+```
+
+#### **4. End-to-End Integration Tests**
+
+```powershell
+# Full deployment cycle test
+function Test-FullDeploymentCycle {
+    param([string]$TestResourceGroup)
+    
+    try {
+        # Deploy all phases
+        $deployment = ./scripts/Deploy-VwanLab.ps1 -ResourceGroupName $TestResourceGroup
         
-        It "Should have valid parameters" {
-            $template = Get-Content "bicep/modules/vwan.bicep" -Raw
-            $template | Should -Match "@description.*vwanName"
-        }
+        # Validate BGP peering
+        $bgpStatus = ./scripts/Get-BgpStatus.ps1 -ResourceGroupName $TestResourceGroup
+        
+        # Test connectivity
+        $connectivityResults = ./scripts/Test-Connectivity.ps1 -ResourceGroupName $TestResourceGroup -Detailed
+        
+        # Verify JIT access
+        ./scripts/Set-VmJitAccess.ps1 -ResourceGroupName $TestResourceGroup -RequestAccess
+        
+        Write-Host "✅ All tests passed" -ForegroundColor Green
+        return $true
+    }
+    catch {
+        Write-Error "❌ Test failed: $($_.Exception.Message)"
+        return $false
     }
 }
 ```
 
-#### **2. Integration Tests (Full Deployment)**
+### **🎯 Automated Testing with .NET Suite**
 
-```powershell
-# Test complete deployment workflow
-Describe "Integration Tests" {
-    BeforeAll {
-        $resourceGroupName = "rg-test-$(Get-Random)"
-        New-AzResourceGroup -Name $resourceGroupName -Location "East US"
-    }
-    
-    It "Should deploy successfully" {
-        $deployment = .\scripts\Deploy-VwanLab.ps1 -ResourceGroupName $resourceGroupName
-        $deployment.ProvisioningState | Should -Be "Succeeded"
-    }
-    
-    AfterAll {
-        Remove-AzResourceGroup -Name $resourceGroupName -Force
-    }
-}
-```
-
-#### **3. Connectivity Tests**
+#### **Lab Health Monitoring**
 
 ```csharp
-// C# connectivity testing
-public class ConnectivityTests
+// VwanLabAutomation health checks
+public class LabHealthTests
 {
     [Test]
-    public async Task ShouldPingBetweenSpokes()
+    public async Task ShouldValidateAllVmsRunning()
     {
-        var vm1IP = await GetVmPrivateIP("vwanlab-test-vm1");
-        var vm2IP = await GetVmPrivateIP("vwanlab-test-vm2");
-        
-        var pingResult = await ExecuteRemoteCommand(vm1IP, $"ping {vm2IP}");
-        Assert.That(pingResult.ExitCode, Is.EqualTo(0));
+        var vms = await DiscoverLabVMs();
+        foreach (var vm in vms)
+        {
+            var status = await GetVmPowerState(vm);
+            Assert.That(status, Is.EqualTo("VM running"));
+        }
     }
     
     [Test]
-    public async Task ShouldHaveBgpSession()
+    public async Task ShouldValidateBgpPeeringSessions()
     {
-        var routeServerStatus = await CheckRouteServerPeering();
-        Assert.That(routeServerStatus.State, Is.EqualTo("Connected"));
+        var routeServer = await GetRouteServerStatus();
+        Assert.That(routeServer.BgpConnections.Count, Is.GreaterThan(0));
+        
+        foreach (var connection in routeServer.BgpConnections)
+        {
+            Assert.That(connection.ConnectionState, Is.EqualTo("Connected"));
+        }
     }
 }
 ```
 
-### **🎯 Test Automation**
+#### **Cost Validation Testing**
 
-#### **Continuous Testing Pipeline**
+```bash
+# Test cost optimization features
+dotnet run --project ./src/VwanLabAutomation -- status \
+  --subscription $AZURE_SUBSCRIPTION_ID \
+  --resource-group "rg-vwanlab-cost-test" \
+  --cost-analysis
+```
 
-```yaml
-# GitHub Actions example
-name: Lab Testing Pipeline
-on: [push, pull_request]
+### **📊 Test Reporting**
 
-jobs:
-  template-validation:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Azure CLI
-        uses: azure/CLI@v1
-      - name: Validate Bicep templates
-        run: |
-          az bicep build --file bicep/main.bicep
-          az deployment group validate \
-            --resource-group ${{ secrets.TEST_RG }} \
-            --template-file bicep/main.bicep
+#### **VS Code Testing Integration**
+
+```json
+// .vscode/settings.json
+{
+  "powershell.scriptAnalysis.enable": true,
+  "files.associations": {
+    "*.bicep": "bicep",
+    "*.bicepparam": "bicep"
+  },
+  "azure-pipelines.customSchemaFile": ".vscode/azure-pipelines.schema.json"
+}
+```
+
+#### **Test Results Dashboard**
+
+```powershell
+# Generate test report
+function New-TestReport {
+    param([string]$ResourceGroupName)
+    
+    $report = @{
+        Timestamp = Get-Date
+        ResourceGroup = $ResourceGroupName
+        TemplateValidation = Test-BicepTemplates
+        DeploymentStatus = Get-DeploymentStatus $ResourceGroupName
+        ConnectivityTests = Test-NetworkConnectivity $ResourceGroupName
+        SecurityValidation = Test-JitAccessConfiguration $ResourceGroupName
+        CostAnalysis = Get-LabCostAnalysis $ResourceGroupName
+    }
+    
+    $report | ConvertTo-Json -Depth 5 | Out-File "test-results-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
+}
 ```
 
 ---
@@ -871,7 +1163,175 @@ jobs:
 
 ### **🔍 Common Issues & Solutions**
 
-#### **Issue 1: CIDR Calculation Errors**
+#### **Issue 1: VM Detection in Scripts**
+
+**Problem:** Scripts can't find VMs due to naming pattern mismatches
+
+**Symptoms:**
+```
+No VMs found matching pattern '*vwanlab*'
+```
+
+**Solution:** Use the updated scripts with flexible VM pattern matching:
+```powershell
+# Enhanced VM detection in Set-VmJitAccess.ps1
+$vmPatterns = @('vm-s*', '*vwanlab*', '*nva*', '*rras*', '*spoke*')
+$vms = @()
+foreach ($pattern in $vmPatterns) {
+    $foundVms = Get-AzVM -ResourceGroupName $ResourceGroupName | Where-Object { $_.Name -like $pattern }
+    if ($foundVms) { $vms += $foundVms }
+}
+```
+
+#### **Issue 2: Deployment Timeout Errors**
+
+**Problem:** Large deployments timing out on Azure Resource Manager
+
+**Symptoms:**
+```
+The deployment 'main' failed with error: The request was aborted: The operation has timed out.
+```
+
+**Solution:** Use phased deployment approach:
+```powershell
+# Deploy specific phases to avoid timeouts
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-test" -Phase 1  # Core infrastructure
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-test" -Phase 2  # Virtual machines
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-test" -Phase 3  # Azure Firewall
+```
+
+#### **Issue 3: BGP Peering Failures**
+
+**Problem:** Route Server and NVA not establishing BGP session
+
+**Diagnostic Commands:**
+```powershell
+# Use the comprehensive BGP status script
+./scripts/Get-BgpStatus.ps1 -ResourceGroupName $resourceGroupName
+
+# Check detailed BGP architecture
+./scripts/Check-VwanBgpArchitecture.ps1 -ResourceGroupName $resourceGroupName
+
+# Validate RRAS configuration
+./scripts/Validate-RrasConfiguration.ps1 -ResourceGroupName $resourceGroupName
+```
+
+**Common Causes & Fixes:**
+1. **RRAS Service Issues**: Use `./scripts/Fix-RrasService.ps1`
+2. **BGP Configuration**: Run `./scripts/Configure-NvaBgp.ps1`
+3. **Network Connectivity**: Check with `./scripts/Test-Connectivity.ps1`
+
+#### **Issue 4: JIT Access Configuration**
+
+**Problem:** Just-In-Time VM access not working
+
+**Symptoms:**
+```
+Security Center Standard tier is required for Just-In-Time VM access
+```
+
+**Solution:**
+```powershell
+# Use the enhanced JIT script with automatic policy creation
+./scripts/Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -VerboseLogging
+
+# Request immediate access via REST API
+./scripts/Set-VmJitAccess.ps1 -ResourceGroupName "rg-vwanlab-demo" -RequestAccess
+```
+
+#### **Issue 5: Multi-Region Connectivity**
+
+**Problem:** Cross-region connectivity not working in multi-region deployments
+
+**Diagnostic Steps:**
+```powershell
+# Use multi-region specific deployment
+./scripts/Deploy-VwanLab-MultiRegion.ps1 -ResourceGroupName "rg-multi-test"
+
+# Test cross-region connectivity
+./scripts/Test-Connectivity.ps1 -ResourceGroupName "rg-multi-test" -Detailed
+```
+
+### **🛠️ Debugging Tools & Scripts**
+
+#### **Comprehensive Lab Status**
+
+```powershell
+# Get complete lab health status
+./scripts/Get-LabStatus.ps1 -ResourceGroupName $resourceGroupName
+
+# Use .NET automation for advanced diagnostics
+dotnet run --project ./src/VwanLabAutomation -- status \
+  --subscription $subscriptionId \
+  --resource-group $resourceGroupName
+```
+
+#### **Network Connectivity Diagnostics**
+
+```powershell
+# Detailed connectivity testing
+./scripts/Test-Connectivity.ps1 -ResourceGroupName $resourceGroupName -Detailed
+
+# Troubleshoot specific networking issues
+./scripts/Troubleshoot-VwanLab.ps1 -ResourceGroupName $resourceGroupName
+```
+
+#### **Template and Deployment Debugging**
+
+```powershell
+# Validate templates before deployment
+az deployment group validate \
+  --resource-group $resourceGroupName \
+  --template-file "./bicep/phases/phase1-core.bicep" \
+  --parameters "./bicep/parameters/lab.bicepparam"
+
+# Use what-if analysis
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName $resourceGroupName -WhatIf
+```
+
+### **📊 Diagnostic Data Collection**
+
+#### **Automated Troubleshooting Report**
+
+```powershell
+function New-TroubleshootingReport {
+    param([string]$ResourceGroupName)
+    
+    $report = @{
+        Timestamp = Get-Date
+        ResourceGroup = $ResourceGroupName
+        
+        # Resource status
+        Resources = Get-AzResource -ResourceGroupName $ResourceGroupName
+        
+        # VM status
+        VMs = Get-AzVM -ResourceGroupName $ResourceGroupName -Status
+        
+        # Network status
+        VNets = Get-AzVirtualNetwork -ResourceGroupName $ResourceGroupName
+        
+        # BGP status (if applicable)
+        BgpStatus = & "./scripts/Get-BgpStatus.ps1" -ResourceGroupName $ResourceGroupName
+        
+        # Connectivity results
+        ConnectivityResults = & "./scripts/Test-Connectivity.ps1" -ResourceGroupName $ResourceGroupName -Detailed
+    }
+    
+    $report | ConvertTo-Json -Depth 5 | Out-File "troubleshooting-report-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
+    Write-Host "📊 Troubleshooting report saved" -ForegroundColor Green
+}
+```
+
+#### **Error Log Analysis**
+
+```powershell
+# Get deployment errors
+$deployment = Get-AzResourceGroupDeployment -ResourceGroupName $resourceGroupName -Name "main"
+if ($deployment.ProvisioningState -eq "Failed") {
+    Write-Host "❌ Deployment failed. Error details:" -ForegroundColor Red
+    $deployment.StatusMessage | ConvertFrom-Json | Format-List
+}
+```
 
 **Problem:**
 ```
