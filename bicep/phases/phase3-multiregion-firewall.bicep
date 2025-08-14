@@ -1,5 +1,5 @@
 // Phase 3: Azure Firewall Deployment
-// Deploys Azure Firewall Premium in Spoke 1 (West US)
+// Deploys Azure Firewall Standard in Spoke 1 (West US)
 
 targetScope = 'resourceGroup'
 
@@ -19,7 +19,7 @@ param firewallName string = 'afw-${environmentPrefix}-wus'
 param firewallPolicyName string = 'afwp-${environmentPrefix}-wus'
 
 @description('Azure Firewall SKU')
-param firewallSku string = 'Premium'
+param firewallSku string = 'Standard'
 
 @description('Tags to apply to all resources')
 param tags object = {

@@ -9,7 +9,7 @@
     This unified script provides performance-optimized, timeout-resistant deployment for both classic and multi-region Azure VWAN lab environments.
     
     Features:
-    - Multi-region architecture with Azure Firewall Premium (default)
+    - Multi-region architecture with Azure Firewall Standard (default)
     - Classic single-region architecture with BGP and Route Server
     - Performance-optimized VMs (Standard_B2s with 2 GB RAM, Standard_LRS storage)
     - Phased deployment approach (the only reliable method)
@@ -27,7 +27,7 @@
 
 .PARAMETER Architecture
     Lab architecture to deploy: 'MultiRegion', 'Classic', 'MULTIREGION', 'CLASSIC'
-    - MultiRegion: 3 VWAN hubs, Azure Firewall Premium, VPN connectivity (6 phases)
+    - MultiRegion: 3 VWAN hubs, Azure Firewall Standard, VPN connectivity (6 phases)
     - Classic: Single VWAN hub, BGP Route Server, NVA (5 phases)
     Default: MultiRegion
 
@@ -168,7 +168,7 @@ $script:ArchitectureConfig = @{
         Phases = @{
             1 = @{ Name = 'Core Infrastructure'; Description = '3 VWAN Hubs, 5 VNets' }
             2 = @{ Name = 'Virtual Machines'; Description = 'Linux + Windows VMs across regions' }
-            3 = @{ Name = 'Azure Firewall'; Description = 'Firewall Premium in West US' }
+            3 = @{ Name = 'Azure Firewall'; Description = 'Firewall Standard in West US' }
             4 = @{ Name = 'VPN Gateway'; Description = 'Site-to-Site VPN for Spoke 3' }
             5 = @{ Name = 'VWAN Connections'; Description = 'Hub-to-spoke connections' }
             6 = @{ Name = 'Routing Configuration'; Description = 'Route tables and traffic steering' }
@@ -389,10 +389,31 @@ function Get-DeployerPublicIp {
     }
 }
 
+function Test-PhaseNeedsVmCredentials {
+    param(
+        [int]$PhaseNumber,
+        [string]$Architecture
+    )
+    
+    # Phase 2 always deploys VMs in both architectures
+    if ($PhaseNumber -eq 2) {
+        return $true
+    }
+    
+    # No other phases need VM credentials
+    return $false
+}
+
 function Get-VmCredentials {
+    param(
+        [string]$RequiredForPhase = "unknown"
+    )
+    
     if ($DeploymentMode -eq 'InfrastructureOnly') {
         return @{ Username = $null; Password = $null }
     }
+    
+    Write-Host "🔐 VM credentials required for Phase $RequiredForPhase deployment" -ForegroundColor Cyan
     
     $username = $AdminUsername
     $password = $AdminPassword
@@ -410,7 +431,18 @@ function Get-VmCredentials {
     if (-not $password) {
         do {
             $password = Read-Host "Enter VM administrator password" -AsSecureString
+            $confirmPassword = Read-Host "Confirm VM administrator password" -AsSecureString
+            
+            # Convert to plain text for validation
             $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
+            $plainConfirmPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($confirmPassword))
+            
+            # Check if passwords match
+            if ($plainPassword -ne $plainConfirmPassword) {
+                Write-Warning "Passwords do not match. Please try again."
+                $password = $null
+                continue
+            }
             
             if ($plainPassword.Length -lt 8 -or $plainPassword.Length -gt 123) {
                 Write-Warning "Password must be 8-123 characters long"
@@ -438,6 +470,12 @@ function Get-VmCredentials {
             
         } while (-not $password)
     }
+
+    return @{
+        Username = $username
+        Password = $password
+    }
+}
     
     return @{
         Username = $username
@@ -766,7 +804,7 @@ function Show-DeploymentSummary {
         Write-Host "🌐 Multi-Region Architecture Deployed:" -ForegroundColor Cyan
         Write-Host "  • 3 VWAN Hubs: West US, Central US, Southeast Asia" -ForegroundColor White
         Write-Host "  • 5 Spoke VNets with specialized configurations" -ForegroundColor White
-        Write-Host "  • Azure Firewall Premium in Spoke 1 (West US)" -ForegroundColor White
+        Write-Host "  • Azure Firewall Standard in Spoke 1 (West US)" -ForegroundColor White
         Write-Host "  • VPN connectivity for Spoke 3 (Central US)" -ForegroundColor White
         Write-Host "  • Cross-region VM connectivity" -ForegroundColor White
     } else {
@@ -801,7 +839,9 @@ try {
     Test-Prerequisites
     Connect-AzureAccount -SubscriptionId $SubscriptionId
     $deployerPublicIp = Get-DeployerPublicIp
-    $credentials = Get-VmCredentials
+    
+    # Initialize credentials - will be collected when needed
+    $credentials = $null
     
     # Ensure resource group exists
     $rg = Get-AzResourceGroup -Name $ResourceGroupName -ErrorAction SilentlyContinue
@@ -824,6 +864,11 @@ try {
             Write-Host "⏭️ Skipping Phase $phaseNum - already deployed successfully" -ForegroundColor Yellow
             $results[$phaseNum] = @{ Success = $true; Skipped = $true; AlreadyDeployed = $true }
             continue
+        }
+        
+        # Collect VM credentials only when needed
+        if (-not $credentials -and (Test-PhaseNeedsVmCredentials -PhaseNumber $phaseNum -Architecture $Architecture)) {
+            $credentials = Get-VmCredentials -RequiredForPhase $phaseNum
         }
         
         if ($Architecture -eq 'MultiRegion') {

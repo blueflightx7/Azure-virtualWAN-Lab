@@ -13,7 +13,7 @@
     This script originally deployed a comprehensive multi-region Azure VWAN lab environment with:
     - 3 VWAN Hubs (West US, Central US, Southeast Asia)
     - 5 Spoke VNets with specialized configurations
-    - Azure Firewall Premium in Spoke 1
+    - Azure Firewall Standard in Spoke 1
     - VPN connectivity for Spoke 3 via RRAS
     - Linux and Windows VMs across regions
     - Advanced routing and security configurations
@@ -46,7 +46,7 @@
     Specific phase to deploy (1-6). If not specified, deploys all phases
     - Phase 1: Core infrastructure (3 VWAN hubs, 5 VNets)
     - Phase 2: Virtual machines (Linux + Windows across regions)
-    - Phase 3: Azure Firewall Premium
+    - Phase 3: Azure Firewall Standard
     - Phase 4: VPN Gateway for Spoke 3
     - Phase 5: VWAN hub connections
     - Phase 6: Routing configuration
@@ -400,7 +400,7 @@ function Deploy-Phase2 {
 }
 
 function Deploy-Phase3 {
-    Write-PhaseHeader -PhaseNumber 3 -Description "Azure Firewall Premium"
+    Write-PhaseHeader -PhaseNumber 3 -Description "Azure Firewall Standard"
     
     $templateFile = Join-Path $PSScriptRoot "../bicep/phases/phase3-multiregion-firewall.bicep"
     $parameters = @{
@@ -408,7 +408,7 @@ function Deploy-Phase3 {
         westUsRegion = $script:MultiRegionConfig.WestUsRegion
         firewallName = $script:MultiRegionConfig.FirewallName
         firewallPolicyName = $script:MultiRegionConfig.FirewallPolicyName
-        firewallSku = 'Premium'
+        firewallSku = 'Standard'
     }
     
     if ($WhatIf) {
@@ -564,7 +564,7 @@ function Show-DeploymentSummary {
     Write-Host "🌐 Multi-Region Architecture Deployed:" -ForegroundColor Cyan
     Write-Host "  • 3 VWAN Hubs: West US, Central US, Southeast Asia" -ForegroundColor White
     Write-Host "  • 5 Spoke VNets with specialized configurations" -ForegroundColor White
-    Write-Host "  • Azure Firewall Premium in Spoke 1 (West US)" -ForegroundColor White
+    Write-Host "  • Azure Firewall Standard in Spoke 1 (West US)" -ForegroundColor White
     Write-Host "  • VPN connectivity for Spoke 3 (Central US)" -ForegroundColor White
     Write-Host "  • Cross-region VM connectivity" -ForegroundColor White
     

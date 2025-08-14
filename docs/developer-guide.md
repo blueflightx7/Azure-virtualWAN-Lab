@@ -84,7 +84,7 @@ Deployment Options:
 │   └── BGP peering scenarios
 └── Multi-Region Architecture (v2.0)
     ├── 3 VWAN hubs (West US, Central US, Southeast Asia)
-    ├── Azure Firewall Premium
+    ├── Azure Firewall Standard
     ├── Cross-region connectivity
     └── VPN Site-to-Site integration
 ```
@@ -621,7 +621,7 @@ The project uses a phased deployment approach to prevent Azure timeout issues an
 bicep/phases/
 ├── phase1-core.bicep          # Core infrastructure (VWAN, VNets, NSGs)
 ├── phase2-vms.bicep           # Virtual machines and compute resources
-├── phase3-firewall.bicep      # Azure Firewall Premium (multi-region)
+├── phase3-firewall.bicep      # Azure Firewall Standard (multi-region)
 ├── phase4-vpngateway.bicep    # VPN Gateway for BGP testing
 ├── phase5-connections.bicep   # VWAN connections and VNet peerings
 └── phase6-routing.bicep       # Route tables and traffic steering

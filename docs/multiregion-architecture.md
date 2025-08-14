@@ -81,7 +81,7 @@ This document describes the comprehensive multi-region Azure VWAN lab environmen
 - Deploy RRAS VM in Spoke 3 with routing features
 
 **Phase 3: Azure Firewall**
-- Deploy Azure Firewall Premium in Spoke 1
+- Deploy Azure Firewall Standard in Spoke 1
 - Create firewall policy with allow-all rules
 - Configure management and data plane subnets
 
@@ -205,7 +205,7 @@ This document describes the comprehensive multi-region Azure VWAN lab environmen
 **Complete Multi-Region Architecture**:
 - **Core Networking**: $2,857.90/month (69.4%)
   - 3x VWAN Hubs: $547.50
-  - Azure Firewall Premium: $1,402.50
+  - Azure Firewall Standard: $693.75
   - Hub Connections & Gateways: $907.90
 - **Compute Resources**: $400.76/month (9.7%)
   - Mixed VM sizes across regions
@@ -220,7 +220,7 @@ This document describes the comprehensive multi-region Azure VWAN lab environmen
 
 ### 📉 **Cost Reduction Strategies**
 
-1. **Development Environment**: Remove Azure Firewall Premium → Save $1,402.50 (40% reduction)
+1. **Development Environment**: Remove Azure Firewall Standard → Save $693.75 (21% reduction)
 2. **Lab/Training**: Use Spot VMs and basic storage → Save $1,967.50 (45% reduction)
 3. **Proof of Concept**: Single region deployment → Save $2,755.30 (63% reduction)
 4. **Auto-Shutdown**: Use `-EnableAutoShutdown` parameter → Save 50% on compute costs

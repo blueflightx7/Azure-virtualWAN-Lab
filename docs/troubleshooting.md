@@ -6,7 +6,7 @@ This comprehensive guide covers all common issues and their solutions encountere
 
 ### ✅ **Multi-Region Architecture Support**
 - **3-Region VWAN Deployment**: West US, Central US, Southeast Asia
-- **Azure Firewall Premium Integration**: Security hub troubleshooting
+- **Azure Firewall Standard Integration**: Security hub troubleshooting
 - **VPN Site-to-Site Connectivity**: RRAS and VPN gateway issues
 - **Cross-Region Routing**: Hub-to-hub connectivity problems
 
@@ -58,7 +58,7 @@ Test-Path ".\scripts\Deploy-VwanLab-MultiRegion.ps1"
 .\scripts\Deploy-VwanLab-Phased.ps1 -ResourceGroupName "rg-vwanlab-mr"
 ```
 
-### Issue: Azure Firewall Premium Deployment Fails
+### Issue: Azure Firewall Standard Deployment Fails
 **Symptoms:**
 - Firewall policy creation errors
 - Premium features not available

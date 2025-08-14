@@ -21,7 +21,7 @@ This document provides comprehensive cost estimates for the Azure VWAN multi-reg
 | **VWAN Hubs (Standard)** | 3 | $182.50 | $547.50 |
 | **Hub Connections** | 7 total | $14.60 each | $102.20 |
 | **VPN Gateway (S2S)** | 1 | $131.40 | $131.40 |
-| **Azure Firewall Premium** | 3 hubs | $467.50 each | $1,402.50 |
+| **Azure Firewall Standard** | 3 hubs | $231.25 each | $693.75 |
 | **Route Server** | 1 | $182.50 | $182.50 |
 | **Public IPs (Standard)** | 12 | $3.65 each | $43.80 |
 | **NAT Gateway** | 3 | $45.00 each | $135.00 |
@@ -100,7 +100,7 @@ This document provides comprehensive cost estimates for the Azure VWAN multi-reg
 - **Use Case**: Enterprise production workload
 
 #### **Scenario 2: Development Environment**
-- **Remove Azure Firewall Premium**: -$1,402.50
+- **Remove Azure Firewall Standard**: -$693.75
 - **Use Basic VMs**: -$200.00
 - **Reduce Storage**: -$150.00
 - **Monthly Cost**: $2,588.76
@@ -156,7 +156,7 @@ This document provides comprehensive cost estimates for the Azure VWAN multi-reg
 
 #### **Fixed Costs**
 1. **VWAN Hubs**: Always running infrastructure
-2. **Azure Firewall**: Premium tier for advanced features
+2. **Azure Firewall**: Standard tier for network security
 3. **Public IPs**: Required for external connectivity
 4. **Route Server**: Essential for BGP routing
 

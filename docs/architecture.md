@@ -1,6 +1,6 @@
 # Azure Virtual WAN Multi-Region Lab Architecture
 
-This document describes the multi-region Azure Virtual WAN lab environment designed to demonstrate advanced networking concepts including hub-to-hub connectivity, Azure Firewall Premium, VPN gateway integration, and cross-region routing.
+This document describes the multi-region Azure Virtual WAN lab environment designed to demonstrate advanced networking concepts including hub-to-hub connectivity, Azure Firewall Standard, VPN gateway integration, and cross-region routing.
 
 ## Overview
 
@@ -8,7 +8,7 @@ The lab environment consists of:
 
 1. **Three Azure Virtual WAN Hubs** - Multi-region central routing
 2. **Five Spoke VNets** - Distributed across three regions  
-3. **Azure Firewall Premium** - Advanced security and routing
+3. **Azure Firewall Standard** - Network security and routing
 4. **VPN Gateway Integration** - IPSec connectivity for hybrid scenarios
 5. **Cross-Region Connectivity** - Global network architecture
 
@@ -47,7 +47,7 @@ West US Region          Central US Region        SE Asia Region
 
 #### Spoke 1 - Azure Firewall Hub (10.0.1.0/24)
 - **VmSubnet**: `10.0.1.0/26` - Virtual machines
-- **AzureFirewallSubnet**: `10.0.1.64/26` - Azure Firewall Premium
+- **AzureFirewallSubnet**: `10.0.1.64/26` - Azure Firewall Standard
 - **AzureFirewallManagementSubnet**: `10.0.1.128/26` - Firewall management
 
 #### Spoke 4 - Protected Workload (10.0.2.0/26)
@@ -89,7 +89,7 @@ West US Region          Central US Region        SE Asia Region
 
 ### Azure Firewall Integration
 
-#### Firewall Premium Features
+#### Firewall Standard Features
 - **TLS Inspection**: Deep packet inspection with certificate validation
 - **IDPS**: Intrusion Detection and Prevention System
 - **URL Filtering**: Category-based web filtering
@@ -178,7 +178,7 @@ Route: Automatic via VWAN global transit
 Source: VM in Spoke 4 (10.0.2.x)
 Path: Spoke 4 → Azure Firewall → West US Hub → Central US Hub → Spoke 3
 Destination: VM in Spoke 3 (10.16.1.x) 
-Security: Inspected by Azure Firewall Premium
+Security: Inspected by Azure Firewall Standard
 ```
 
 ### VPN Traffic Flow

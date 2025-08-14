@@ -21,7 +21,7 @@ This is an Azure Virtual WAN lab environment project for BGP routing and network
 - **Southeast Asia Hub** (suggested: 10.202.0.0/24) with BGP IPs 10.202.0.4, 10.202.0.5
 
 **Spoke Networks:**
-- **Spoke 1 (West US)**: VWAN hub connection (suggested: 10.0.1.0/24) with Azure Firewall Premium
+- **Spoke 1 (West US)**: VWAN hub connection (suggested: 10.0.1.0/24) with Azure Firewall Standard
 - **Spoke 2 (Southeast Asia)**: VWAN hub connection (suggested: 10.32.1.0/26)
 - **Spoke 3 (Central US)**: VPN gateway connection for BGP testing
 - **Spoke 4 (West US)**: VNet peering to Spoke 1 (suggested: 10.0.2.0/26)
@@ -82,7 +82,7 @@ When working with this project:
    **Multi-Region (6 Phases):**
    - Phase 1: Core infrastructure (3 VWAN hubs, 5 VNets, NSGs)
    - Phase 2: Virtual machines (6 VMs across 3 regions)
-   - Phase 3: Azure Firewall Premium (West US)
+   - Phase 3: Azure Firewall Standard (West US)
    - Phase 4: VPN Gateway (Central US)
    - Phase 5: VWAN connections and VNet peerings
    - Phase 6: Route tables and traffic steering (includes default route table config)

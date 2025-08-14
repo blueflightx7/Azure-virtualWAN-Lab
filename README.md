@@ -6,7 +6,7 @@
 [![PowerShell](https://img.shields.io/badge/Scripts-PowerShell-blue)](https://docs.microsoft.com/en-us/powershell/)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple)](https://dotnet.microsoft.com/)
 
-A comprehensive Azure Virtual WAN lab environment demonstrating advanced networking concepts including BGP peering, Azure Route Server integration, Network Virtual Appliances (NVAs), **Azure Firewall Premium**, **multi-region connectivity**, and enterprise-grade automation. Features **multi-region deployment**, **VPN connectivity**, **Just-In-Time (JIT) VM access**, and **intelligent resource management**.
+A comprehensive Azure Virtual WAN lab environment demonstrating advanced networking concepts including BGP peering, Azure Route Server integration, Network Virtual Appliances (NVAs), **Azure Firewall Standard**, **multi-region connectivity**, and enterprise-grade automation. Features **multi-region deployment**, **VPN connectivity**, **Just-In-Time (JIT) VM access**, and **intelligent resource management**.
 
 ## 🎯 Overview
 
@@ -14,7 +14,7 @@ This lab environment showcases two architecture options:
 
 ### **🔥 NEW: Multi-Region Architecture (v2.0)**
 - **3 VWAN Hubs** across West US, Central US, and Southeast Asia
-- **Azure Firewall Premium** as security hub in West US
+- **Azure Firewall Standard** as security hub in West US
 - **VPN Site-to-Site** connectivity via RRAS
 - **5 Spoke VNets** with specialized routing configurations
 - **Cross-region connectivity** and traffic steering
@@ -37,7 +37,7 @@ graph TB
         
         subgraph "Spoke 1 - Firewall Hub"
             S1["VNet 10.0.1.0/24"]
-            FW["Azure Firewall<br/>Premium"]
+            FW["Azure Firewall<br/>Standard"]
             WinVM["Windows VM"]
             LinVM1["Linux VM"]
         end
@@ -269,7 +269,7 @@ dotnet run --project .\src\VwanLabAutomation\ -- deploy --resource-group "rg-vwa
 | Component | Monthly Cost (2025) | Usage |
 |-----------|-------------------|-------|
 | **3x VWAN Hubs** | ~$547.50 | Multi-region operations |
-| **Azure Firewall Premium** | ~$1,402.50 | Enterprise security |
+| **Azure Firewall Standard** | ~$693.75 | Network security |
 | **11x Virtual Machines** | ~$400.76 | Mixed VM sizes |
 | **Storage & Security** | ~$715.57 | Comprehensive monitoring |
 | **Additional Services** | ~$367.03 | Bastion, private endpoints |
