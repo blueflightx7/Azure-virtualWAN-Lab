@@ -1,0 +1,167 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "5348288782256798655"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "centralUsRegion": {
+      "type": "string",
+      "defaultValue": "Central US",
+      "metadata": {
+        "description": "Central US region"
+      }
+    },
+    "centralUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Central US VWAN Hub name"
+      }
+    },
+    "vpnGatewayName": {
+      "type": "string",
+      "defaultValue": "[format('vpngw-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "VPN Gateway name"
+      }
+    },
+    "spoke3AddressSpace": {
+      "type": "string",
+      "defaultValue": "10.16.1.0/25",
+      "metadata": {
+        "description": "Spoke 3 address space for local network gateway - corrected to Central US allocation"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab-MultiRegion",
+        "Project": "VWAN-BGP-Firewall-Lab",
+        "CreatedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/vpnGateways",
+      "apiVersion": "2024-05-01",
+      "name": "[parameters('vpnGatewayName')]",
+      "location": "[parameters('centralUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "virtualHub": {
+          "id": "[resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName'))]"
+        },
+        "vpnGatewayScaleUnit": 1,
+        "bgpSettings": {
+          "asn": 65515,
+          "peerWeight": 0
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/vpnSites",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke3-vpnsite', parameters('environmentPrefix'))]",
+      "location": "[parameters('centralUsRegion')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "virtualWan": {
+          "id": "[reference(resourceId('Microsoft.Network/virtualHubs', parameters('centralUsHubName')), '2024-05-01').virtualWan.id]"
+        },
+        "deviceProperties": {
+          "deviceVendor": "Microsoft",
+          "deviceModel": "RRAS",
+          "linkSpeedInMbps": 100
+        },
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('spoke3AddressSpace')]"
+          ]
+        },
+        "vpnSiteLinks": [
+          {
+            "name": "link1",
+            "properties": {
+              "ipAddress": "1.1.1.1",
+              "linkProperties": {
+                "linkProviderName": "Microsoft",
+                "linkSpeedInMbps": 100
+              },
+              "bgpProperties": {
+                "asn": 65001,
+                "bgpPeeringAddress": "10.48.1.4"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/vpnGateways/vpnConnections",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('vpnGatewayName'), format('{0}-spoke3-vpnconnection', parameters('environmentPrefix')))]",
+      "properties": {
+        "remoteVpnSite": {
+          "id": "[resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix')))]"
+        },
+        "routingWeight": 0,
+        "vpnConnectionProtocolType": "IKEv2",
+        "vpnLinkConnections": [
+          {
+            "name": "link1",
+            "properties": {
+              "vpnSiteLink": {
+                "id": "[format('{0}/vpnSiteLinks/link1', resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix'))))]"
+              },
+              "sharedKey": "VwanLabSharedKey123!",
+              "connectionBandwidth": 100,
+              "enableBgp": true
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/vpnGateways', parameters('vpnGatewayName'))]",
+        "[resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "vpnGatewayId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/vpnGateways', parameters('vpnGatewayName'))]"
+    },
+    "vpnGatewayName": {
+      "type": "string",
+      "value": "[parameters('vpnGatewayName')]"
+    },
+    "vpnSiteId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix')))]"
+    },
+    "vpnConnectionId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/vpnGateways/vpnConnections', parameters('vpnGatewayName'), format('{0}-spoke3-vpnconnection', parameters('environmentPrefix')))]"
+    },
+    "vpnSiteLinkId": {
+      "type": "string",
+      "value": "[format('{0}/vpnSiteLinks/link1', resourceId('Microsoft.Network/vpnSites', format('{0}-spoke3-vpnsite', parameters('environmentPrefix'))))]"
+    }
+  }
+}

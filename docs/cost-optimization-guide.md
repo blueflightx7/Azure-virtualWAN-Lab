@@ -1,40 +1,46 @@
-# Azure VWAN Demo Cost Optimization Guide
+# Azure VWAN Lab Cost Optimization Guide
 
-## 🎯 **Is Your Current Configuration Cost-Effective?**
+## 🎯 **Multi-Configuration Cost Analysis**
 
-**Current Config Analysis:**
-- **VM Size**: `Standard_B2s` for NVA ($29.93/month), `Standard_B1s` for test VMs ($10.22/month each) - ✅ **OPTIMIZED for demo**
-- **Storage**: Standard_LRS - ✅ **COST-EFFECTIVE for demo**
-- **Always-On**: 24/7 runtime - ⚠️ **CONSIDER auto-shutdown for additional savings**
-- **Mixed VM Sizing**: NVA + Test VMs - ✅ **OPTIMAL for BGP architecture**
+### **Standard Single-Region Lab**
+- **Monthly Cost**: $505.78
+- **Hourly Cost**: $0.69
+- **Best For**: BGP learning, basic VWAN demos, individual training
+
+### **Multi-Region Production Architecture**
+- **Monthly Cost**: $4,341.26
+- **Hourly Cost**: $5.95
+- **Best For**: Enterprise training, production testing, comprehensive scenarios
+
+> 📊 **Detailed Analysis**: See [Multi-Region Cost Analysis](./multiregion-cost-analysis-2025.md) for comprehensive cost breakdowns and optimization strategies.
 
 ## 💰 **Cost Comparison by Demo Type**
 
-### **Current Configuration (2025 Pricing)**
+### **Current Standard Configuration (2025 Pricing)**
 ```
 Monthly Cost: $505.78
-Hourly Cost: $0.61
+Hourly Cost: $0.69
 Best For: Production testing, BGP demos, enterprise training
 ```
 
 ### **Optimized Demo (Infrastructure-Only)**
 ```
 Monthly Cost: $413.80 (-18%)
-Hourly Cost: $0.57 (-7%)
+Hourly Cost: $0.57 (-18%)
 Best For: Network-only demos, BGP architecture learning
 ```
 
 ### **Event-Based Demo (Auto-shutdown 12h/day)**
 ```
 Monthly Cost: $380.59 (-25%)
-Hourly Cost: $0.61 (12 hours/day)
+Hourly Cost: $0.69 (12 hours/day)
 Best For: Scheduled demos, workshops, cost-conscious usage
 ```
 
 ### **Minimal Demo (No Route Server)**
 ```
 Monthly Cost: $323.28 (-36%)
-Hourly Cost: $0.36 (-41%)
+Hourly Cost: $0.44 (-36%)
 Best For: Basic VWAN demos, simple connectivity testing
 ```
 
@@ -46,8 +52,8 @@ Best For: Basic VWAN demos, simple connectivity testing
 .\scripts\Deploy-VwanLab-Phased.ps1 -ParameterFile .\bicep\parameters\lab-demo-optimized.bicepparam
 
 # Key changes:
-# - VM Size: Standard_B1s (-89% compute cost)
-# - Storage: Standard HDD (-70% storage cost)
+# - VM Size: Standard_B1s (-50% compute cost)
+# - Storage: Standard_LRS (cost-effective)
 # - Same functionality, lower cost
 ```
 

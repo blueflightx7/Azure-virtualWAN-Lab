@@ -14,6 +14,25 @@ This is an Azure Virtual WAN lab environment project for BGP routing and network
 
 ## Architecture Overview
 
+### Multi-Region Architecture (Default)
+**Regional Hubs:**
+- **West US Hub** (suggested: 10.200.0.0/24) with BGP IPs 10.200.0.4, 10.200.0.5
+- **Central US Hub** (suggested: 10.201.0.0/24) with BGP IPs 10.201.0.4, 10.201.0.5  
+- **Southeast Asia Hub** (suggested: 10.202.0.0/24) with BGP IPs 10.202.0.4, 10.202.0.5
+
+**Spoke Networks:**
+- **Spoke 1 (West US)**: VWAN hub connection (suggested: 10.0.1.0/24) with Azure Firewall Standard
+- **Spoke 2 (Southeast Asia)**: VWAN hub connection (suggested: 10.32.1.0/26)
+- **Spoke 3 (Central US)**: VPN gateway connection for BGP testing
+- **Spoke 4 (West US)**: VNet peering to Spoke 1 (suggested: 10.0.2.0/26)
+- **Spoke 5 (West US)**: VNet peering to Spoke 1 (suggested: 10.0.3.0/26)
+
+**Peering Architecture (CRITICAL):**
+- **Hub Connections**: Only Spoke 1 (West US) and Spoke 2 (Southeast Asia) connect to VWAN hubs
+- **VNet Peerings**: Spoke 4 and Spoke 5 peer to Spoke 1 via traditional VNet peering
+- **Route Injection**: West US hub default route table has 10.0.0.0/12 → Spoke 1 for regional routing
+
+### Classic Architecture (Legacy)
 **Core Components (Default Suggestions):**
 - **VWAN Hub**: Central routing point (suggested: 10.0.0.0/16) with default BGP IPs 10.0.32.6, 10.0.32.5
 - **Spoke 1**: NVA subnet (suggested: 10.1.0.0/16) with RRAS VM (suggested: 10.1.0.4, ASN 65001)
@@ -58,12 +77,23 @@ When working with this project:
 
 ### Infrastructure and Deployment
 1. **Bicep Primary**: Use Bicep templates as the primary deployment method. ARM templates are legacy (archived)
-2. **Phased Deployment**: Follow the 5-phase deployment pattern to avoid Azure timeouts:
+2. **Phased Deployment**: Follow the 6-phase multi-region or 5-phase classic deployment pattern to avoid Azure timeouts:
+   
+   **Multi-Region (6 Phases):**
+   - Phase 1: Core infrastructure (3 VWAN hubs, 5 VNets, NSGs)
+   - Phase 2: Virtual machines (6 VMs across 3 regions)
+   - Phase 3: Azure Firewall Standard (West US)
+   - Phase 4: VPN Gateway (Central US)
+   - Phase 5: VWAN connections and VNet peerings
+   - Phase 6: Route tables and traffic steering (includes default route table config)
+   
+   **Classic (5 Phases):**
    - Phase 1: Core infrastructure (VWAN, VNets, NSGs)
    - Phase 2: Virtual machines (NVA, test VMs)  
    - Phase 3: Route Server deployment
    - Phase 4: VWAN connections and peering
    - Phase 5: BGP peering configuration
+
 3. **Conditional Deployment**: Templates check for existing resources to avoid conflicts
 4. **Resource Naming**: Use `environmentPrefix` parameter consistently (default: 'vwanlab')
 
@@ -91,23 +121,41 @@ When working with this project:
 19. **Auto-Shutdown**: Use `-EnableAutoShutdown` to reduce costs and improve security posture
 20. **Fallback Security**: JIT configuration falls back to restrictive NSG rules if Defender for Cloud unavailable
 
+### Routing and Traffic Flow
+21. **Hub-Spoke Model**: Only Spoke 1 and Spoke 2 connect directly to VWAN hubs
+22. **Regional Transit**: Spoke 1 acts as regional transit point for Spoke 4 and Spoke 5
+23. **Default Route Tables**: Phase 6 automatically configures regional summary routes
+24. **Cross-Region Access**: 10.0.0.0/12 route enables cross-region access to all West US spokes
+25. **Firewall Transit**: All internet and cross-region traffic flows through Azure Firewall in Spoke 1
+
 ### Code Quality
-21. **Error Handling**: Include comprehensive error handling in PowerShell scripts
-22. **Validation**: Always test Bicep templates with `az bicep build` before deployment
-23. **Documentation**: Update docs in `/docs` folder when making architectural changes
-24. **Legacy Management**: Archive outdated scripts/templates instead of deleting
-25. **Flexible Defaults**: Provide suggested values for IP ranges, ASNs, and naming but make them user-configurable
+26. **Error Handling**: Include comprehensive error handling in PowerShell scripts
+27. **Validation**: Always test Bicep templates with `az bicep build` before deployment
+28. **Documentation**: Update docs in `/docs` folder when making architectural changes
+29. **Legacy Management**: Archive outdated scripts/templates instead of deleting
+30. **Flexible Defaults**: Provide suggested values for IP ranges, ASNs, and naming but make them user-configurable
+
+### Deployment Validation
+31. **Route Table Verification**: Always check default route tables after Phase 6 deployment
+32. **Peering Validation**: Verify VNet peerings are bidirectional and in "Connected" state  
+33. **Hub Readiness**: Phases 4-6 automatically wait for hub "Succeeded" state before proceeding
+34. **Idempotent Operations**: All phases can be re-run safely without creating duplicates
 
 ### Critical Knowledge for AI Assistants
-26. **VWAN Hub BGP IPs**: Default BGP router addresses are 10.0.32.6 and 10.0.32.5 (Azure auto-assigned)
-27. **Route Server Detection**: Use `Get-AzRouteServer` cmdlet, not `Get-AzVirtualNetworkGateway`
-28. **Mixed Resource Groups**: VWAN resources may be mixed with other resource types - filter appropriately
-29. **Conditional Bicep**: Use `concat()` and conditional arrays for dynamic NSG rule creation
-30. **Parameter Passing**: Always pass `deployerPublicIP` parameter through all deployment phases
-31. **BGP Architecture**: Route Server peering ≠ VWAN route injection (separate configurations needed)
-32. **User Confirmation Required**: Always confirm IP ranges, ASN values, and naming conventions with user before deployment
-33. **Suggest Defaults**: Present tested default values but allow user customization for all network parameters
-34. **SFI Implementation**: JIT access requires Defender for Cloud; fallback to NSG rules if unavailable
+35. **VWAN Hub BGP IPs**: Multi-region hubs use different BGP IPs (10.200.0.4/5, 10.201.0.4/5, 10.202.0.4/5); Classic uses 10.0.32.6/5
+36. **Route Server Detection**: Use `Get-AzRouteServer` cmdlet, not `Get-AzVirtualNetworkGateway`
+37. **Mixed Resource Groups**: VWAN resources may be mixed with other resource types - filter appropriately
+38. **Conditional Bicep**: Use `concat()` and conditional arrays for dynamic NSG rule creation
+39. **Parameter Passing**: Always pass `deployerPublicIP` parameter through all deployment phases
+40. **BGP Architecture**: Route Server peering ≠ VWAN route injection (separate configurations needed)
+41. **User Confirmation Required**: Always confirm IP ranges, ASN values, and naming conventions with user before deployment
+42. **Suggest Defaults**: Present tested default values but allow user customization for all network parameters
+43. **SFI Implementation**: JIT access requires Defender for Cloud; fallback to NSG rules if unavailable
+44. **Peering Architecture (CRITICAL)**: Only Spoke 1 and Spoke 2 connect to VWAN hubs; Spoke 4/5 use VNet peering to Spoke 1
+45. **Default Route Table**: West US hub requires 10.0.0.0/12 → Spoke 1 route for cross-region traffic to Spoke 4/5
+46. **Phase 6 Automation**: Deployment script automatically configures default route tables via PowerShell (not Bicep)
+47. **VNet Peering Model**: Spoke 4 ↔ Spoke 1 ↔ Spoke 5 (bidirectional peerings); no direct hub connections for Spoke 4/5
+48. **Regional Routing**: West US regional block (10.0.0.0/12) routes through Spoke 1 for firewall transit and VNet peering distribution
 
 ## Common Issues and Solutions
 
@@ -117,9 +165,16 @@ When working with this project:
 - **BGP Status**: Use `Get-BgpStatus.ps1` to check peering status and route advertisements
 
 ### Deployment Issues  
-- **Timeouts**: Use phased deployment approach for large infrastructures
+- **Timeouts**: Use phased deployment approach for large infrastructures (6 phases for multi-region)
 - **VM Creation**: Check existing VMs before deployment to avoid conflicts
 - **NSG Rules**: RDP rules are auto-created during deployment based on deployer IP
+- **Hub Dependencies**: Phases 4, 5, 6 require VWAN hubs to be in "Succeeded" state before proceeding
+
+### Peering Architecture Issues
+- **Incorrect Hub Connections**: Spoke 4 and Spoke 5 should NOT connect to VWAN hubs directly
+- **Missing VNet Peerings**: Spoke 4 and Spoke 5 must have bidirectional peerings to Spoke 1
+- **Route Table Missing**: West US hub default route table needs 10.0.0.0/12 → Spoke 1 route
+- **Cross-Region Traffic**: Traffic to Spoke 4/5 from other regions requires the /12 summary route
 
 ### Security Configurations
 - **RDP Access**: Automatically configured from deployer IP during deployment
@@ -136,8 +191,11 @@ When working with this project:
 
 ### Primary Deployment
 ```powershell
-# Full lab deployment with auto-RDP configuration
+# Full multi-region lab deployment with auto-RDP configuration
 ./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Deploy specific phase only
+./scripts/Deploy-VwanLab.ps1 -ResourceGroupName "rg-vwanlab-demo" -Phase 6
 ```
 
 ### BGP Management
@@ -168,6 +226,12 @@ When working with this project:
 
 # Get lab status and health
 ./scripts/Get-LabStatus.ps1 -ResourceGroupName "rg-vwanlab-demo"
+
+# Verify VWAN hub routing and peering architecture
+az network vhub route-table show --vhub-name "vhub-vwanlab-wus" --resource-group "rg-vwanlab-demo" --name "defaultRouteTable" --query "routes" --output table
+
+# Check VNet peerings
+az network vnet peering list --vnet-name "vnet-spoke1-vwanlab-wus" --resource-group "rg-vwanlab-demo" --query "[?contains(name, 'spoke')].{Name:name, RemoteVNet:remoteVirtualNetwork.id, State:peeringState}" --output table
 ```
 
 ## Technologies Used

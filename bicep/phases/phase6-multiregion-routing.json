@@ -1,0 +1,187 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.37.4.10188",
+      "templateHash": "2832448975874575468"
+    }
+  },
+  "parameters": {
+    "environmentPrefix": {
+      "type": "string",
+      "defaultValue": "vwanlab",
+      "metadata": {
+        "description": "Environment prefix for resource naming"
+      }
+    },
+    "westUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-wus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "West US VWAN Hub name"
+      }
+    },
+    "centralUsHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-cus', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Central US VWAN Hub name"
+      }
+    },
+    "southeastAsiaHubName": {
+      "type": "string",
+      "defaultValue": "[format('vhub-{0}-sea', parameters('environmentPrefix'))]",
+      "metadata": {
+        "description": "Southeast Asia VWAN Hub name"
+      }
+    },
+    "azureFirewallPrivateIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Firewall private IP address"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {
+        "Environment": "Lab-MultiRegion",
+        "Project": "VWAN-BGP-Firewall-Lab",
+        "CreatedBy": "Bicep"
+      },
+      "metadata": {
+        "description": "Tags to apply to all resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('westUsHubName'), 'westUsRegionalRoutes')]",
+      "properties": {
+        "labels": [
+          "westus-regional"
+        ],
+        "routes": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('centralUsHubName'), 'centralUsRegionalRoutes')]",
+      "properties": {
+        "labels": [
+          "centralus-regional"
+        ],
+        "routes": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualHubs/hubRouteTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}/{1}', parameters('southeastAsiaHubName'), 'southeastAsiaRegionalRoutes')]",
+      "properties": {
+        "labels": [
+          "southeastasia-regional"
+        ],
+        "routes": []
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke4-rt', parameters('environmentPrefix'))]",
+      "location": "[resourceGroup().location]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "DefaultRouteToFirewall",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('azureFirewallPrivateIp')]"
+            }
+          },
+          {
+            "name": "Spoke1ToFirewall",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('azureFirewallPrivateIp')]"
+            }
+          },
+          {
+            "name": "Spoke5ToFirewall",
+            "properties": {
+              "addressPrefix": "10.0.3.0/26",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('azureFirewallPrivateIp')]"
+            }
+          }
+        ],
+        "disableBgpRoutePropagation": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "2024-05-01",
+      "name": "[format('{0}-spoke5-rt', parameters('environmentPrefix'))]",
+      "location": "[resourceGroup().location]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "DefaultRouteToFirewall",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('azureFirewallPrivateIp')]"
+            }
+          },
+          {
+            "name": "Spoke1ToFirewall",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('azureFirewallPrivateIp')]"
+            }
+          },
+          {
+            "name": "Spoke4ToFirewall",
+            "properties": {
+              "addressPrefix": "10.0.2.0/26",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[parameters('azureFirewallPrivateIp')]"
+            }
+          }
+        ],
+        "disableBgpRoutePropagation": false
+      }
+    }
+  ],
+  "outputs": {
+    "spoke4RouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke4-rt', parameters('environmentPrefix')))]"
+    },
+    "spoke5RouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/routeTables', format('{0}-spoke5-rt', parameters('environmentPrefix')))]"
+    },
+    "westUsHubRouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', parameters('westUsHubName'), 'westUsRegionalRoutes')]"
+    },
+    "centralUsHubRouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', parameters('centralUsHubName'), 'centralUsRegionalRoutes')]"
+    },
+    "southeastAsiaHubRouteTableId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/virtualHubs/hubRouteTables', parameters('southeastAsiaHubName'), 'southeastAsiaRegionalRoutes')]"
+    }
+  }
+}

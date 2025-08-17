@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Public\\Source\\scripts\\vwanlab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj": {}
+    "C:\\Users\\Public\\Source\\repos\\Azure-VWAN-Lab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Public\\Source\\scripts\\vwanlab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj": {
+    "C:\\Users\\Public\\Source\\repos\\Azure-VWAN-Lab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Public\\Source\\scripts\\vwanlab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj",
+        "projectUniqueName": "C:\\Users\\Public\\Source\\repos\\Azure-VWAN-Lab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj",
         "projectName": "VwanLabAutomation",
-        "projectPath": "C:\\Users\\Public\\Source\\scripts\\vwanlab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj",
+        "projectPath": "C:\\Users\\Public\\Source\\repos\\Azure-VWAN-Lab\\src\\VwanLabAutomation\\VwanLabAutomation.csproj",
         "packagesPath": "C:\\Users\\shahankarim\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Public\\Source\\scripts\\vwanlab\\src\\VwanLabAutomation\\obj\\",
+        "outputPath": "C:\\Users\\Public\\Source\\repos\\Azure-VWAN-Lab\\src\\VwanLabAutomation\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
