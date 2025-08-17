@@ -18,6 +18,15 @@ param vpnGatewayName string = 'vpngw-${environmentPrefix}-cus'
 @description('Spoke 3 address space for local network gateway - corrected to Central US allocation')
 param spoke3AddressSpace string = '10.16.1.0/25'
 
+@description('RRAS VM public IP address for VPN site configuration')
+param rrasVmPublicIp string = '172.202.20.234' // Will be provided during deployment
+
+@description('RRAS VM private IP address for BGP peering')
+param rrasVmPrivateIp string = '10.16.1.4' // Default subnet assignment
+
+@description('BGP ASN for RRAS VM (private ASN range)')
+param rrasBgpAsn int = 65001
+
 @description('Tags to apply to all resources')
 param tags object = {
   Environment: 'Lab-MultiRegion'
@@ -70,14 +79,14 @@ resource vpnSite 'Microsoft.Network/vpnSites@2024-05-01' = {
       {
         name: 'link1'
         properties: {
-          ipAddress: '1.1.1.1' // Placeholder - will be updated with actual RRAS VM public IP
+          ipAddress: rrasVmPublicIp // RRAS VM public IP
           linkProperties: {
             linkProviderName: 'Microsoft'
             linkSpeedInMbps: 100
           }
           bgpProperties: {
-            asn: 65001
-            bgpPeeringAddress: '10.48.1.4'
+            asn: rrasBgpAsn
+            bgpPeeringAddress: rrasVmPrivateIp
           }
         }
       }
@@ -103,7 +112,7 @@ resource vpnConnection 'Microsoft.Network/vpnGateways/vpnConnections@2024-05-01'
           vpnSiteLink: {
             id: '${vpnSite.id}/vpnSiteLinks/link1'
           }
-          sharedKey: 'VwanLabSharedKey123!'
+          sharedKey: 'VwanLabSharedKey123!' // Pre-shared key for RRAS configuration
           connectionBandwidth: 100
           enableBgp: true
         }

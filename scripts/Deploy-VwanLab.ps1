@@ -476,12 +476,6 @@ function Get-VmCredentials {
         Password = $password
     }
 }
-    
-    return @{
-        Username = $username
-        Password = $password
-    }
-}
 
 function Test-PhaseAlreadyDeployed {
     param(
